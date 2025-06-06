@@ -1,66 +1,40 @@
 \section{Introduction}
-
-As \citet{Dijkstra1988} argues, formal methods form a critical part of computer programming.
-The digital nature of the computer means that even a slight error in a program results not in a slight error in output, but entirely unexpected output.
-Formal proof forces the programmer to reason through why he believes his program will do what he intends, and using a proof assistant forces this reasoning to be thorough enough that each step can be justified by some formal system.
-
-The family of proof assistants under consideration of this thesis are those based on a dependent type theory (e.g. Agda, Coq, Lean).
-These systems have an advantage over others, as programs and proofs are written in a common language \citep{Nordstrom1990}.
-
-For any proof assistant, there is a problem akin to ``Who watches the watchmen?", how does one know that the proof checker is itself correct?
-As a solution to this problem, \citet{Barendregt2005} propose that proof assistants should admit the checking of a proof by a small, independent program (commonly referred to as the ``de Bruijn criterion").
-By their logic, we can trust a proof assistant whose proof checker is simple enough for us to understand, and which allows us to implement our own proof checker if we aren't convinced existing implementations are correct.
-
-Simplicity isn't all there is to a proof checker, however.
-As \citet{Geuvers2008} argues, if the proof checker takes longer than is reasonable to wait, not only is the proof assistant not much use, there can be situations wherein the status of the ``proof" as a proof come into question.
-Therefore, the proof checker must be both simple and reasonably efficient (we take ``reasonably efficient" here to mean ``at least as fast as the others").
-
-Accepting this, one might then ask if a dependently typed proof assistant can satisfy this criterion.
-To assess this, we must first know what it takes to check a proof in a dependent type theory, and even more basically, what a dependent type theory is.
-
 \subsection{Dependent Types}
 \label{sec:dependent-types}
 
 Just as functional languages treat functions as first class values, dependently typed languages treat types as first class values.
-An example is the following program, 
-
+For example, in the following function:
+{\small
 \begin{verbatim}
 int_or_string : (b : Bool) -> (if b then Int else String)
 int_or_string = \b -> if b then 3141 else "Hello, World!"
 \end{verbatim}
-
-Here the function \verb|int_or_string| has domain \texttt{Bool}, but its codomain depends on which boolean it is passed.
-If it is passed the boolean \texttt{true}, then it will return an \texttt{Int}, specifically \texttt{3141}.
+}
+if it is passed the boolean \texttt{true}, then it will return an \texttt{Int}, specifically \texttt{3141}.
 Otherwise if it is passed \texttt{false}, then it will return the \texttt{String "Hello, World!"}.
 
-As an example of the theorem proving capabilities of this language we could prove the theorem \verb|int_or_string(true) = 3141|.
-
+Using this function, we can express facts about our program as types, such as:
+{\small
 \begin{verbatim}
 int_or_string_theorem : int_or_string(true) = 3141
 int_or_string_theorem = reflexivity
 \end{verbatim}
+}
 
-Here we define a new variable \verb|int_or_string_theorem| whose \textit{type} is \\ \verb|int_or_string(true) = 3141|.
-Just like how function types are inhabited by functions, or the integer type is inhabited by integers, the equality types are inhabited by proof of the equality.
-Here the proof of equality we have defined \verb|int_or_string_theorem| to be is simply reflexivity, meaning that both sides of the equality are already the same.
-This exhibits one of the more confusing aspects of dependent type theory, equality is not syntactic but up to symbolic execution.
-Two expressions or types are equal if they can be ``run" to the same value.
+Type checking this requires deciding equality between two expressions.
+The typing judgment $\Gamma \vdash e : A$, meaning expression $e$ has type $A$ with free variables contained in $\Gamma$, must reason about execution (or at least equality) of programs.
+In the true branch of \verb|int_or_string| we make the judgment $\vdash 3141 : ({\small\verb|if true then Int else String|})$, and must reason this type is equal {\small\verb|Int|}.
 
-In fact, we had already seen this in the definition of \verb|int_or_string|.
-One of the judgments of the formal system underlying dependent type theory is the typing judgment taking the form $\Gamma \vdash e : A$, meaning expression $e$ has type $A$ with free variables contained in $\Gamma$.
-So in the true branch of \verb|int_or_string| we make the judgment $b : \verb|Bool| \vdash 3141 : (\verb|if true then Int else String|)$, and since we are reasoning up to symbolic execution this is equal to to $b : \verb|Bool| \vdash 3141 : \verb|Int|$.
-
-This ``reasoning up to symbolic execution" is formalized using the second judgment of dependent type theory, the equality judgment.
-This takes the form $\Gamma \vdash a = b : A$, meaning $a$ is judgmentally equal to $b$ at type $A$ with free variables $\Gamma$.
-The two judgments then interact with each other with the following deduction rule
+Equality is captured by judgements of the form $\Gamma \vdash a = b : A$, meaning $a$ is equal to $b$ at type $A$ with free variables $\Gamma$.
+The two judgments then interact with each other with the following typing rule:
 
 \begin{mathpar}
   \inferrule*[left=Conv]{\Gamma \vdash e : B \\ \Gamma \vdash A = B : \texttt{Type}}{\Gamma \vdash e : A}
 \end{mathpar}
 
-Which states that an expression $e$ of type $B$ can also be considered of type $A$ so long as $A$ and $B$ are judgmentally equal types.
+An expression $e$ of type $B$ can also be considered of type $A$ so long as $A$ and $B$ are equal.
 
-We've already seen two instances of this equality judgment at play in the \verb|int_or_string| and \verb|int_or_string_theorem| example.
+The our example relies on two instances of this equality judgment.
 
 \begin{mathpar}
   \inferrule*[left=App-$\beta$]
@@ -76,9 +50,9 @@ We've already seen two instances of this equality judgment at play in the \verb|
     }
 \end{mathpar}
 
-App-$\beta$ is the familiar lambda calculus $\beta$ rule, where a function literal applied to an argument is equal to the body of the function with the argument substituted for the parameter variable.
-This rule was used when type checking \verb|int_or_string_theorem| to judge that \verb|int_or_string(true)| is equal to \verb|if true then 3141 else "Hello, World!"|.
-The other rule, if-true-$\beta$, was then used to judge that \verb|if true then 3141 else "Hello, World!"| is equal to \verb|3141|.
+App-$\beta$ is the familiar $\lambda$-calculus $\beta$ rule, where a function literal applied to an argument is equal to the body of the function with the argument substituted for the parameter variable.
+This rule was used when type checking {\small\verb|int_or_string_theorem|} to judge that {\small\verb|int_or_string(true)|} is equal to {\small\verb|if true then 3141 else "Hello, World!"|}.
+The other rule, if-true-$\beta$, was then used to judge that {\small\verb|if true then 3141 else "Hello, World!"|} is equal to {\small\verb|3141|}.
 Since both these rules capture the execution of a program, we group them together and call them both $\beta$ rules.
 We then call an expression which looks like the left-hand side of a $\beta$ rule a ``redex", for reducible expression.
 
@@ -121,15 +95,6 @@ When writing code which decides if a judgment is provable for the subjects of th
 For example, in a language with complete type inference (e.g. Haskell, OCaml), the type in the typing judgment is always treated as output while the context and expression are input.
 
 \subsubsection{Typing Judgement}
-
-The Pfenning bidirectional type checking recipe \citep{Dunfield2021} provides a simple algorithm for deciding the typing judgment by carefully choosing when to switch between the input and output modes.
-This recipe splits the operators in the language into two camps, constructors which build an element of a specific type and whose typing rule takes the type as input, and destructors which perform some operation on elements of a specific type and whose typing rule produce their type as output.
-In the example code given above, \verb|\b -> ...|, \verb|3141|, and \verb|"Hello, World!"| are constructors while the \verb|if| operator is a destructor.
-Following this recipe makes the code deciding the typing judgment very regular, making it both simple to read and simple to write.
-Additionally, the algorithm performs a single traversal of the syntax tree, making it reasonably efficient.
-
-\subsubsection{Equality Judgement}
-
 The story for the equality judgment, however, is not so straightforward.
 As \citet{Abel2013} shows, the most widely used approach for deciding judgmental equality is normalization by evaluation (NbE).
 An algorithm for deciding judgmental equality is said to use NbE when it maps the syntax of a language into a semantic domain and then back into syntax.
@@ -176,12 +141,6 @@ Here we have three different approaches where the tradeoffs they make are unclea
 It could be the case that handling type-directed rules causes untenable performance loss, or requires unwieldy implementation, meaning theories which require them should be avoided.
 On the other hand, one of the approaches to handling them described above could have minimal performance cost and be quite simple to implement.
 The problem is that no comparison between them has been made, and so there is currently no good way to decide between them.
-
-\subsection{Thesis Statement}
-We propose that the type-directed algorithm described by \citet{Chapman2005} will perform as well as a purely syntax-directed approach while allowing for theories with a stronger judgmental equality.
-The rest of this thesis is split into two parts.
-First we define exactly what the syntax and type-directed approaches to judgmental equality are, and how an algorithm for deciding the type-directed equality can be derived from the bidirectional recipe.
-Then we present the results of a performance comparison between Kovac's smalltt, which uses a syntax-directed equality, and version of smalltt we modified to use a type-directed equality.
 
 % I theorize that the algorithm described by \citet{Chapman2005} will perform as well as a purely syntax-directed approach while allowing for theories with a stronger, type-directed, judgemental equality.
 % This belief is based on previous experience implementing a type checker for a dependently typed language.
