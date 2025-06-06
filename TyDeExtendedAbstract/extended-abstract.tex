@@ -457,7 +457,7 @@ In addition to being a semantics for the theory, we can view these rules as a me
   \label{fig:base-typing-rules}
 \end{figure}
 
-Finally, we present the typing rules for the theory in a bidirectional style \citep{dunfield2019}.
+Finally, we present the typing rules for the theory in a bidirectional style \citep{Dunfield2021}.
 The check judgment $\checkJ{\Gamma}{e}{e_t}$ means that the term $e$ checks against the type $n_t$ under the context $\Gamma$.
 It is formulated such that it can be decided when given concrete terms for $\Gamma$, $e$, and $n_t$.
 The synth judgment $\synthJ{\Gamma}{e}{n_t}$ means that the type $n_t$ can be inferred for the term $e$ under the context $\Gamma$.
@@ -642,7 +642,7 @@ For example, the App= rule corresponds to the $\Pi$-E typing rule from \autoref{
 However, the Fun-$\eta$ rule differs from this pattern.
 Instead of following the structure of the $\Pi$-I typing rule, it uses the function extensionality principle to convert the problem of equality at the dependent function type into that of equality at the codomain type.
 
-Therefore, we can reuse the Pfenning bidirectional typing recipe \citep{dunfield2019} to derive the type-directed equality rules.
+Therefore, we can reuse the Pfenning bidirectional typing recipe \citep{Dunfield2021} to derive the type-directed equality rules.
 The only change we make is to replace the introduction rules for types with an $\eta$ rule we want to decide with the $\eta$ rule.
 
 \subsection{Unit and Dependent Pair Types}
