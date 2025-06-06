@@ -59,8 +59,8 @@ Following \citet{Chapman2005}, we have two equality judgements: the check judgem
     }
 
     \inferrule*[left=$\Sigma$-T${=}$]
-    { \chkEqJ{\Gamma}{n_1}{n_1'}{\univE} \\
-      \freshJ{\Gamma}{y} \\
+    { \chkEqJ{\Gamma}{n_1}{n_1'}{\univE}\qquad
+      \freshJ{\Gamma}{y}\qquad
       \steps{\subst{e_2}{x}{y}}{n_2} \\
       \steps{\subst{e_2'}{x'}{y}}{n_2'} \\
       \chkEqJ{\Gamma}{n_2}{n_2'}{\univE}
