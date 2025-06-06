@@ -105,12 +105,11 @@ Since inferring values for meta variables is irrelevant to the core of this thes
 The core data types and functions from the original smalltt are as follows.
 
 \begin{figure*}
-\begin{minipage}{.49\textwidth}
 \small
+\begin{minipage}[t]{.45\textwidth}
+\begin{minipage}[t]{.40\textwidth}
 \begin{lstlisting}
-
-data Tm
-  = LocalVar Ix
+data Tm = LocalVar Ix
   | App Tm Tm Icit
   | Lam NameIcit Tm
   | Pi NameIcit Ty Ty
@@ -121,23 +120,25 @@ type Ty = Tm
 type Ix = Int
 
 type Lvl = Int
-
-data Val =
-    VLocalVar Lvl Spine
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}[t]{.59\textwidth}
+\begin{lstlisting}
+data Val = VLocalVar Lvl Spine
   | VLam NameIcit Closure
   | VPi NameIcit VTy Closure
   | VU
 
 type VTy = Val
 
-data Spine =
-    SId
+data Spine = SId
   | SApp Spine Val
-
+\end{lstlisting}
+\end{minipage}
+\begin{lstlisting}
 data Closure = Closure Env Tm
 
-data Env =
-    ENil
+data Env = ENil
   | EDef Env Val
 
 eval :: Env -> Tm -> Val
@@ -147,10 +148,11 @@ unify :: Lvl -> Val -> Val -> IO ()
 unifySp :: Lvl -> Spine -> Spine -> IO ()
 \end{lstlisting}
 \end{minipage}
-\begin{minipage}{.49\textwidth}
+\begin{minipage}[t]{.54\textwidth}
+\begin{leftbar}
+\begin{minipage}[t]{.49\textwidth}
 \begin{lstlisting}
-data Tm
-  = LocalVar Ix
+data Tm = LocalVar Ix
   | App Tm Tm Icit
   | Lam NameIcit Tm
   | Pi NameIcit Ty Ty
@@ -161,9 +163,11 @@ data Tm
   | Unit
   | UnitI
   | U
-
-data Val =
-    VLocalVar Lvl Spine
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}[t]{.49\textwidth}
+\begin{lstlisting}
+data Val = VLocalVar Lvl Spine
   | VLam NameIcit Closure
   | VPi NameIcit VTy Closure
   | VSigma NameIcit VTy Closure
@@ -172,12 +176,13 @@ data Val =
   | VUnitI
   | VU
 
-data Spine =
-    SId
+data Spine = SId
   | SApp Spine Val
   | SFst Spine
   | SSnd Spine
-
+\end{lstlisting}
+\end{minipage}
+\begin{lstlisting}
 unifyChk :: Cxt -> Val -> Val -> VTy -> IO ()
 
 unifySp :: Cxt -> VTy -> Spine -> Spine -> IO VTy
@@ -186,8 +191,9 @@ type TypeCxt = Map Lvl VTy
 
 type Cxt = Cxt {lvl :: Lvl, localTypes :: TypeCxt}
 \end{lstlisting}
+\end{leftbar}
 \end{minipage}
-\caption{Left: smalltt original; Right: modified smalltt}
+\caption{syntax-direct smalltt, key definitions (left); type-directed smalltt, key definitions (right)}
 \end{figure*}
 
 Here the \lstinline{Tm} type corresponds to our expressions, \lstinline{Val} to normal forms, and \lstinline{Spine} to the neutral terms.
