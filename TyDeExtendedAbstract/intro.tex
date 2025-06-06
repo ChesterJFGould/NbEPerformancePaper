@@ -34,7 +34,7 @@ The two judgments then interact with each other with the following typing rule:
 
 An expression $e$ of type $B$ can also be considered of type $A$ so long as $A$ and $B$ are equal.
 
-The our example relies on two instances of this equality judgment.
+The our example relies on two rules of this equality judgment.
 
 \begin{mathpar}
   \inferrule*[left=App-$\beta$]
@@ -50,14 +50,13 @@ The our example relies on two instances of this equality judgment.
     }
 \end{mathpar}
 
+Both are $\beta$ rules, which capture the execution of a program.
 App-$\beta$ is the familiar $\lambda$-calculus $\beta$ rule, where a function literal applied to an argument is equal to the body of the function with the argument substituted for the parameter variable.
 This rule was used when type checking {\small\verb|int_or_string_theorem|} to judge that {\small\verb|int_or_string(true)|} is equal to {\small\verb|if true then 3141 else "Hello, World!"|}.
 The other rule, if-true-$\beta$, was then used to judge that {\small\verb|if true then 3141 else "Hello, World!"|} is equal to {\small\verb|3141|}.
-Since both these rules capture the execution of a program, we group them together and call them both $\beta$ rules.
-We then call an expression which looks like the left-hand side of a $\beta$ rule a ``redex", for reducible expression.
 
-There is, however, another group of rules called $\eta$ rules.
-Instead of capturing the execution of a program, they give us additional equalities that we can glean from the type of a term.
+Another group of rules, called $\eta$ rules, give us additional equalities that we can glean from the type of a term,
+rather than capturing the execution of a program.
 
 \begin{mathpar}
   \inferrule*[left=Fun-$\eta$]
@@ -73,47 +72,33 @@ Instead of capturing the execution of a program, they give us additional equalit
   }
 \end{mathpar}
 
-
-The most familiar of these is the Fun-$\eta$ rule, which gives us the function extensionality principle for terms of a function type.
-Another is the Unit-$\eta$ rule for the Unit type which has the single element $\unitE$.
+For example, the Fun-$\eta$ rule gives a function extensionality principle for terms of a function type.
+The Unit-$\eta$ rule implies the Unit type has the single element $\unitE$.
 Since there is only one element of the Unit type, we can judge all expressions of Unit type equal.
 This rule lets us type check the following program.
-
+{\small
 \begin{verbatim}
 unit_contractible : (x : Unit) -> (y : Unit) -> x = y
 unit_contractible x y = reflexivity
 \end{verbatim}
-
-The main part of this thesis will be comparing two systems, one of which supports this Unit-$\eta$ rule and one which doesn't.
+}
 
 \subsection{Implementation}
+Implement this equality judgment involves many design decisions.
 
-So, the two main components of a proof checker for a dependent type theory are the algorithms for deciding the typing and equality judgments.
-Therefore if our proof assistant based on this theory is to satisfy the de Bruijn criterion, there must be simple, efficient algorithms for deciding these judgments.
-
-When writing code which decides if a judgment is provable for the subjects of the judgment, there is a decision to be made about which subjects will be treated as input and which as output.
-For example, in a language with complete type inference (e.g. Haskell, OCaml), the type in the typing judgment is always treated as output while the context and expression are input.
-
-\subsubsection{Typing Judgement}
-The story for the equality judgment, however, is not so straightforward.
 As \citet{Abel2013} shows, the most widely used approach for deciding judgmental equality is normalization by evaluation (NbE).
 An algorithm for deciding judgmental equality is said to use NbE when it maps the syntax of a language into a semantic domain and then back into syntax.
 Since judgmentally equal pieces of syntax will actually be equal in the semantic domain, going there, then back into syntax makes them syntactically equal (a process referred to as ``normalization").
 NbE uses this to turn the problem of deciding judgmental equality into one of giving semantics to syntax and then deciding syntactical equality.
 
-NbE can be much simpler to implement when compared with other algorithms, which may require the notoriously tricky capture avoiding substitution, and it can also be faster than other techniques.
-However, the ``can"s here are important.
-As described above, NbE isn't specifically a single algorithm, but more of an approach an algorithm can take to decide an equivalence relation.
+Simple NbE algorithms are based an environment passing interpreter (henceforth referred to as NbE interpreters) such as \citet{Coquand1996} or \citet{Chapman2005}.
+%Other algorithms are either much larger in scale, such as the compiler into bytecode described in \citet{Grgoire2002}, or require the knowledge of very dense mathematics to understand such as \citet{Ahman2013}.
+These interpreters can have performance competitive with the most widely used dependently typed languages, as Andras Kovacs' \textit{smalltt}\footnote{\url{https://github.com/AndrasKovacs/smalltt}} demonstrates.
 
-The simplest NbE algorithms are those based on an environment passing interpreter (henceforth referred to as NbE interpreters) such as \citet{Coquand1996} or \citet{Chapman2005}.
-Comparatively, the implementations of other algorithms are either much larger in scale, such as the compiler into bytecode described in \citet{Grgoire2002}, or require the knowledge of very dense mathematics to understand such as \citet{Ahman2013}.
-In addition, these interpreters can have performance competitive with the most widely used dependently typed languages, as Andras Kovacs' \textit{smalltt}\footnote{\url{https://github.com/AndrasKovacs/smalltt}} demonstrates.
-Therefore, NbE interpreters are the best candidate algorithms for deciding judgmental equality.
-
-However, previous work on NbE interpreters follow an ad-hoc recipe for designing their algorithms.
-When adding new language constructs, it is unclear how to add accompanying equality rules.
-In contrast, bidirectional type checking provides a systematic recipe for adding typing rules for new language constructs by splitting them up into constructors and destructors.
-An algorithm for deciding judgmental equality should also provide a systematic recipe for extending the algorithm to language constructs beyond those considered in its original description.
+%However, previous work on NbE interpreters follow an ad-hoc recipe for designing their algorithms.
+%When adding new language constructs, it is unclear how to add accompanying equality rules.
+%In contrast, bidirectional type checking provides a systematic recipe for adding typing rules for new language constructs by splitting them up into constructors and destructors.
+%An algorithm for deciding judgmental equality should also provide a systematic recipe for extending the algorithm to language constructs beyond those considered in its original description.
 
 %% However, previous descriptions of NbE interpreters make different design decisions without a clear picture as to the tradeoffs being made.
 %% For instance, \citet{Coquand1996} describes an algorithm which doesn't support inspecting the type at which two expressions are being compared at, whereas \citet{Chapman2005} allows the type to be inspected during the syntactic equality test.
@@ -121,26 +106,25 @@ An algorithm for deciding judgmental equality should also provide a systematic r
 %% Unfortunately, no direct comparison has been made between these different designs, and so their cost, both in implementation and in performance, is unclear.
 %% Therefore, when implementing a proof checker for a dependently typed language, it is unclear what tradeoffs are being made when selecting an algorithm to use.
 
-\subsubsection{Type-Directed Rules}
+%\subsubsection{Type-Directed Rules}
 
-Another problem with NbE interpreters, is if and how they can handle ``type-directed" rules.
+However, another design decision is how to handle the type-directed $\eta$ rules.
 
-When comparing two terms for judgmental equality, after the terms are normalized, most judgmental equality rules can be decided by simply comparing the syntax of the two terms.
-There are some rules, however, where it is necessary to inspect the type of the two terms to decide if they are equal.
-One example is the Unit-$\eta$ rule shown at the end of \autoref{sec:dependent-types}.
+Claims abound that syntax-directed approaches are more performant than those that integrate type-direct rules.
+But how much more performant, and is that performance worth the loss in expressivity?
+\todo{Citations for such folklore claims?}
 
-The algorithm described by \citet{Coquand1996} takes the easy way out and excludes these rules from the theory, resulting in a weaker, syntax-directed, judgmental equality.
-However, doing so puts the burden of proof on the user of the theory when a type-directed rule is required for a program to type check.
-
-\citet{Chapman2005} describe an algorithm which supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
-The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
-Another approach is documented by Andras Kovacs in his \textit{elaboration-zoo} \footnote{\url{https://github.com/AndrasKovacs/elaboration-zoo}}.
-There, the type of each term is calculated during normalization and then stored with the normalized term, so it can be inspected as needed during the equality check.
-
-Here we have three different approaches where the tradeoffs they make are unclear.
 It could be the case that handling type-directed rules causes untenable performance loss, or requires unwieldy implementation, meaning theories which require them should be avoided.
 On the other hand, one of the approaches to handling them described above could have minimal performance cost and be quite simple to implement.
-The problem is that no comparison between them has been made, and so there is currently no good way to decide between them.
+The problem is that no apples-to-apples comparison between them has been made, and so there is currently no good way to decide between them.
+
+%The algorithm described by \citet{Coquand1996} takes the easy way out and excludes these rules from the theory, resulting in a weaker, syntax-directed, judgmental equality.
+%However, doing so puts the burden of proof on the user of the theory when a type-directed rule is required for a program to type check.
+%
+%\citet{Chapman2005} describe an algorithm which supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
+%The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
+%Another approach is documented by Andras Kovacs in his \textit{elaboration-zoo} \footnote{\url{https://github.com/AndrasKovacs/elaboration-zoo}}.
+%There, the type of each term is calculated during normalization and then stored with the normalized term, so it can be inspected as needed during the equality check.
 
 % I theorize that the algorithm described by \citet{Chapman2005} will perform as well as a purely syntax-directed approach while allowing for theories with a stronger, type-directed, judgemental equality.
 % This belief is based on previous experience implementing a type checker for a dependently typed language.

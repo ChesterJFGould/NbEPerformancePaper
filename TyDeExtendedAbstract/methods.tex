@@ -20,6 +20,11 @@ The second version extends the first modification with the unit and dependent pa
 The primary goal of this version is to demonstrate that the type-directed equality can decide the unit $\eta$ rule.
 Secondarily, it demonstrates the ease of adding new constructs to the language by following the bidirectional recipe.
 
+We follow the approach of \citet{Chapman2005}, who provide systematic approach to deriving an algorithm which supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
+The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
+%Another approach is documented by Andras Kovacs in his \textit{elaboration-zoo} \footnote{\url{https://github.com/AndrasKovacs/elaboration-zoo}}.
+%There, the type of each term is calculated during normalization and then stored with the normalized term, so it can be inspected as needed during the equality check.
+
 The language in the original version of smalltt is almost identical to that presented in \autoref{fig:base-syntax}.
 It only differs from the theory considered here in two ways.
 Firstly, it includes metavariables, essentially holes in a term which are inferred via unification during type checking.
