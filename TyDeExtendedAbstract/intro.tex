@@ -1,16 +1,15 @@
 \section{Introduction}
-Just as functional languages treat functions as first class values, dependently typed languages treat types as first class values.
-For example, in the following function:
+Dependently typed languages treat types as first class values, enabling computation in types.
+Consider the following function.
 {\small
 \begin{verbatim}
 int_or_string : (b : Bool) -> (if b then Int else String)
 int_or_string = \b -> if b then 3141 else "Hello, World!"
 \end{verbatim}
 }
-if it is passed the boolean \texttt{true}, then it will return an \texttt{Int}, specifically \texttt{3141}.
-Otherwise if it is passed \texttt{false}, then it will return the \texttt{String "Hello, World!"}.
-
-Using this function, we can express facts about our program as types, such as:
+When applied to \texttt{true}, it will return the \texttt{Int} "3141".
+When applied to \texttt{false}, it will return the \texttt{String "Hello, World!"}.
+We can even express such facts as types.
 {\small
 \begin{verbatim}
 int_or_string_theorem : int_or_string(true) = 3141
@@ -18,21 +17,20 @@ int_or_string_theorem = reflexivity
 \end{verbatim}
 }
 
-Type checking this requires deciding equality between two expressions.
-The typing judgment $\Gamma \vdash e : A$, meaning expression $e$ has type $A$ with free variables contained in $\Gamma$, must reason about execution (or at least equality) of programs.
-In the true branch of \verb|int_or_string| we make the judgment $\vdash 3141 : ({\small\verb|if true then Int else String|})$, and must reason this type is equal {\small\verb|Int|}.
+Type checking these requires deciding equality between two expressions.
+The typing judgement $\Gamma \vdash e : A$ (expression $e$ has type $A$ with free variables $\Gamma$), must reason about execution (or at least equality) of programs.
+In the true branch of \verb|int_or_string| we make the judgement $\vdash 3141 : ({\small\verb|if true then Int else String|})$, and must reason this type is equal {\small\verb|Int|}.
 
-Equality is captured by judgements of the form $\Gamma \vdash a = b : A$, meaning $a$ is equal to $b$ at type $A$ with free variables $\Gamma$.
-The two judgments then interact with each other with the following typing rule:
-
+Equality is captured by judgements of the form $\Gamma \vdash a = b : A$ ($a$ is equal to $b$ at type $A$ with free variables $\Gamma$).
+The two judgements then interact with each other with the following typing rule.
 \begin{mathpar}
   \inferrule*[left=Conv]{\Gamma \vdash e : B \\ \Gamma \vdash A = B : \texttt{Type}}{\Gamma \vdash e : A}
 \end{mathpar}
+How to implement decisions procedures for judgements of this form is an oft debated topic.
 
 An expression $e$ of type $B$ can also be considered of type $A$ so long as $A$ and $B$ are equal.
 
-The our example relies on two rules of this equality judgment.
-
+Our example relies on the following two rules.
 \begin{mathpar}
   \inferrule*[left=App-$\beta$]
     {
@@ -46,15 +44,11 @@ The our example relies on two rules of this equality judgment.
     {\Gamma \vdash \text{if true then } a \text{ else } b = a : A
     }
 \end{mathpar}
-
 Both are $\beta$ rules, which capture the execution of a program.
 App-$\beta$ is the familiar $\lambda$-calculus $\beta$ rule, where a function literal applied to an argument is equal to the body of the function with the argument substituted for the parameter variable.
-This rule was used when type checking {\small\verb|int_or_string_theorem|} to judge that {\small\verb|int_or_string(true)|} is equal to {\small\verb|if true then 3141 else "Hello, World!"|}.
-The other rule, if-true-$\beta$, was then used to judge that {\small\verb|if true then 3141 else "Hello, World!"|} is equal to {\small\verb|3141|}.
+These rules are syntax-directed; we can see the type $A$ is not relevant in either rule. 
 
-Another group of rules, called $\eta$ rules, give us additional equalities that we can glean from the type of a term,
-rather than capturing the execution of a program.
-
+Another group of rules, called $\eta$ rules, give us additional equalities that rely on the type, rather than capturing the execution of a program.
 \begin{mathpar}
   \inferrule*[left=Fun-$\eta$]
   { \Gamma, x : A \vdash f x = g x : B
@@ -68,10 +62,9 @@ rather than capturing the execution of a program.
   { \Gamma \vdash a = b : \text{Unit}
   }
 \end{mathpar}
-
-For example, the Fun-$\eta$ rule gives a function extensionality principle for terms of a function type.
+The Fun-$\eta$ rule gives a function extensionality principle for terms of a function type.
 The Unit-$\eta$ rule implies the Unit type has the single element $\unitE$.
-Since there is only one element of the Unit type, we can judge all expressions of Unit type equal.
+Since there is only one element of the Unit type, all expressions of Unit type equal.
 This rule lets us type check the following program.
 {\small
 \begin{verbatim}
@@ -80,21 +73,19 @@ unit_contractible x y = reflexivity
 \end{verbatim}
 }
 
-Implement this equality judgment involves many design decisions.
+As \citet{Abel2013} shows, a widely used approach for deciding judgemental equality is normalization by evaluation (NbE).
+An algorithm for deciding judgemental equality is said to use NbE when it maps the syntax of a language into a semantic domain and then back into syntax.
+Since judgementally equal pieces of syntax will actually be equal in the semantic domain, going there, then back into syntax makes them syntactically equal (a process referred to as ``normalization").
+NbE uses this to turn the problem of deciding judgemental equality into one of giving semantics to syntax and then deciding syntactic equality.
 
-As \citet{Abel2013} shows, the most widely used approach for deciding judgmental equality is normalization by evaluation (NbE).
-An algorithm for deciding judgmental equality is said to use NbE when it maps the syntax of a language into a semantic domain and then back into syntax.
-Since judgmentally equal pieces of syntax will actually be equal in the semantic domain, going there, then back into syntax makes them syntactically equal (a process referred to as ``normalization").
-NbE uses this to turn the problem of deciding judgmental equality into one of giving semantics to syntax and then deciding syntactical equality.
-
-Simple NbE algorithms are based an environment passing interpreter (henceforth referred to as NbE interpreters) such as \citet{Coquand1996} or \citet{Chapman2005}.
+Simple NbE algorithms implement an environment passing interpreter (henceforth referred to as NbE interpreters) such as \citet{Coquand1996} or \citet{Chapman2005}.
 %Other algorithms are either much larger in scale, such as the compiler into bytecode described in \citet{Grgoire2002}, or require the knowledge of very dense mathematics to understand such as \citet{Ahman2013}.
-These interpreters can have performance competitive with the most widely used dependently typed languages, as Andras Kovacs' \textit{smalltt}\footnote{\url{https://github.com/AndrasKovacs/smalltt}} demonstrates.
+These interpreters can have performance competitive with the widely used dependently typed languages, as \citet{smalltt} demonstrates with smalltt.
 
 %However, previous work on NbE interpreters follow an ad-hoc recipe for designing their algorithms.
 %When adding new language constructs, it is unclear how to add accompanying equality rules.
 %In contrast, bidirectional type checking provides a systematic recipe for adding typing rules for new language constructs by splitting them up into constructors and destructors.
-%An algorithm for deciding judgmental equality should also provide a systematic recipe for extending the algorithm to language constructs beyond those considered in its original description.
+%An algorithm for deciding judgemental equality should also provide a systematic recipe for extending the algorithm to language constructs beyond those considered in its original description.
 
 %% However, previous descriptions of NbE interpreters make different design decisions without a clear picture as to the tradeoffs being made.
 %% For instance, \citet{Coquand1996} describes an algorithm which doesn't support inspecting the type at which two expressions are being compared at, whereas \citet{Chapman2005} allows the type to be inspected during the syntactic equality test.
@@ -104,9 +95,9 @@ These interpreters can have performance competitive with the most widely used de
 
 %\subsubsection{Type-Directed Rules}
 
-However, another design decision is how to handle the type-directed $\eta$ rules.
+However, another design decision remains: how to handle the type-directed $\eta$ rules (if at all).
 
-Claims abound that syntax-directed approaches are more performant than those that integrate type-direct rules.
+Claims abound that syntax-directed approaches are more performant than those that integrate type-directed rules.
 But how much more performant, and is that performance worth the loss in expressivity?
 \todo{Citations for such folklore claims?}
 
@@ -114,7 +105,9 @@ It could be the case that handling type-directed rules causes untenable performa
 On the other hand, one of the approaches to handling them described above could have minimal performance cost and be quite simple to implement.
 The problem is that no apples-to-apples comparison between them has been made, and so there is currently no good way to decide between them.
 
-%The algorithm described by \citet{Coquand1996} takes the easy way out and excludes these rules from the theory, resulting in a weaker, syntax-directed, judgmental equality.
+We would like to change that.
+
+%The algorithm described by \citet{Coquand1996} takes the easy way out and excludes these rules from the theory, resulting in a weaker, syntax-directed, judgemental equality.
 %However, doing so puts the burden of proof on the user of the theory when a type-directed rule is required for a program to type check.
 %
 %\citet{Chapman2005} describe an algorithm which supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
