@@ -1,10 +1,11 @@
 \section{Benchmarking Platform}
-Our approach is to compare two versions of 
-Andras Kovac's smalltt \footnote{\url{https://github.com/AndrasKovacs/smalltt}}, a small but realistic, and very performant, type check for type theory.
+Our approach is to compare two versions of smalltt~\cite{smalltt}, a small but realistic, and very performant, type check for type theory.
 The existing version uses a syntax-directed approach without $\eta$ rules.
-We implement a modified version with type-directed rules, trying to stay true to the performance consideration of smalltt.
-We extend the type theory with $\eta$ for dependent pairs ($\Sigma$) and Unit.
-For this version, we follow the approach of \citet{Chapman2005}, who provide systematic approach to deriving an algorithm which supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
+
+We implement two modified version of smalltt with type-directed rules, trying to stay true to the performance consideration of smalltt.
+The first merely transitions to a type-directed approach, while the second extends the type theory with $\eta$ for dependent pairs ($\Sigma$) and Unit.
+Our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the master and sigma-unit branches respectively.
+To implement the type-direcct algorithm, we follow the approach of \citet{Chapman2005}, who provide systematic approach to deriving an algorithm which supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
 The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
 This algorithm uses a bi-directional-like \todo{cite} approach to reduce the amount of type information that is carried through the equality judgement.
 %Another approach is documented by Andras Kovacs in his \textit{elaboration-zoo} \footnote{\url{https://github.com/AndrasKovacs/elaboration-zoo}}.
@@ -37,7 +38,6 @@ This algorithm uses a bi-directional-like \todo{cite} approach to reduce the amo
 %This optimization is of course predicated on the assumption that $n_a'$ and $n_b'$ will usually be substantially larger than $n_a$ and $n_b$.
 %Neither of these should affect our performance comparison since they are present in both the original and our modified versions of smalltt.
 
-The original version of smalltt is available at \url{https://github.com/AndrasKovacs/smalltt/}, while our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the master and sigma-unit branches respectively.
 
 %\subsection{Type Theory}
 
@@ -100,9 +100,8 @@ Following \citet{Chapman2005}, we have two equality judgements: the check judgem
 
 %\subsection{Modifying \textit{smalltt}}
 
-We present an overview of the part of the original smalltt which decides judgmental equality, and then present the overall changes we made to use a type-directed equality.
-Since inferring values for meta variables is irrelevant to the core of this thesis, we have simplified the code shown here slightly to remove most of those parts.
-The core data types and functions from the original smalltt are as follows.
+In \Cref{fig:smalltt}, we present an overview of key definitions from smalltt that implement judgmental equality, and the changes we made to implement type-directed equality.
+We have simplified the code shown here slightly to elide meta variables and unification, which are irrelevant to our purposes, but the implementation supports these. 
 
 \begin{figure*}
 \small
@@ -197,20 +196,20 @@ unifySp :: Cxt -> VTy -> Spine -> Spine -> IO VTy
 \label{fig:smalltt}
 \end{figure*}
 
-Here the \lstinline{Tm} type corresponds to our expressions, \lstinline{Val} to normal forms, and \lstinline{Spine} to the neutral terms.
-Note that the \lstinline{Val} type uses deBruijn levels to represent variables instead of names.
-For example, with deBruijn levels the term $\lambda x. \lambda y. x$ would be represented as $\lambda. \lambda. 0$.
+On the left, the \lstinline{Tm} type corresponds to our expressions, \lstinline{Val} to normal forms, and \lstinline{Spine} to the neutral terms.
+The \lstinline{Val} type uses de Bruijn levels to represent variables instead of names.
+For example, with de Bruijn levels, the term $\lambda x. \lambda y. x$ is represented as $\lambda. \lambda. 0$.
 The \lstinline{Env} type represented a group of substitutions, and so the \lstinline{eval} function corresponds to a combination of the $\steps{e}{n}$ relation and the $\subst{e}{x}{e'}$ function.
-Additionally, a \lstinline{Closure} representents a \lstinline{Env}
-Finally, \lstinline{unify} and \lstinline{unifySp} correspond to the $\stxEqJ{\Theta}{n_a}{n_b}$ judgment, but they use the current deBruijn level to generate fresh variables instead of $\Theta$.
+Additionally, a \lstinline{Closure} representents a \lstinline{Env}.\todo{Not sure why a closure represent an env}
+Finally, \lstinline{unify} and \lstinline{unifySp} correspond to the syntax-directed equality judgment $\stxEqJ{\Gamma}{n_a}{n_b}$ judgement, which elides types, but uses the current de Bruijn level to generate fresh variables instead of $\Gamma$.
 Both \lstinline{unify} and \lstinline{unifySp} return an \lstinline{IO ()} since they will throw an exception if the terms aren't equal or evaluate to \lstinline{return ()} if they are.
 
-Next we present the modifications made to convert smalltt to using a type-directed equality.
-
+On the right, we present the modifications made to convert smalltt to implement type-directed equality.
 We only needed to change the type of \lstinline{unifyChk} and \lstinline{unifySp}.
 \lstinline{unifyChk} now correponds to the $\chkEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment, while \lstinline{unifySp} now correponds to the $\synEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment.
+We also add the unit and dependent pair types to our type-directed version of smalltt.
 
-Finally we present the modifications made to add the unit and dependent pair types to our type-directed version of smalltt.
+\todo{Anything else we want to say?}
 
 %% The input \lstinline{Tm} type represents a well typed expression where all of the local variables have been replaced with deBruijn indices, and the global variables with deBruijn levels \footnote{deBruijn indices replace variables with the number of binders between them and their binding site, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 1$. Whereas deBruijn levels do the same, but number the binding sites starting at the outermost binding, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 0$}.
 %% \lstinline{Val}, the output of \lstinline{eval}, is a datatype representing an expression in $\beta$-normal form with both local global variables represented as deBruijn levels.
@@ -219,8 +218,6 @@ Finally we present the modifications made to add the unit and dependent pair typ
 %% 
 %% The second phase is where the bulk of the changes lie.
 %% The original functions implementing this phase were approximately the following.
-
-Here we didn't need to change the type of any functions, just add the new cases to the existing datatypes and functions.
 
 %% These check syntactic equality on values and spines, respectively, with $\eta$-rules for functions also being applied.
 %% They take the current deBruijn level as an additional parameter for when a new local variable needs to be introduced.
