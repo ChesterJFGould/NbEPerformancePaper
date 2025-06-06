@@ -70,10 +70,10 @@
 \begin{document}
 
 \begin{abstract}
-Dependent type theories are a popular way of formulating proof assistants which allow a program to be developed alongside its proof of correctness.
-A key part of the type checker for these type theories is the method for checking if two types are the same.
-Historically, many different methods for performing this check have been proposed, but not many comparisons of them have been done.
-In this thesis we perform a performance evaluation of a common method against one which can handle more general equalities, and find that the common method outperforms the more general method.
+A key part of any dependent type checker is the method for checking whether two types are equal.
+A common claim is that syntax-directed equality is more performant, although type-directed equality is more expressive.
+However, this claim is difficult to make precise, since implementations choose only one or the other approach, making a direct comparison impossible.
+We present some work-in-progress developing a realistic platform for direct, apples-to-apples, comparison of the two approaches, quantifying how much slower type-direct equality checking is, and analyzing why and how it can be improved.
 \end{abstract}
 
 \maketitle
