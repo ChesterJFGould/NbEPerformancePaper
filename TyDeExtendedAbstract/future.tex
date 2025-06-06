@@ -1,0 +1,22 @@
+\section{Future Work}
+
+After conducting this research some questions remain.
+
+\subsection{Is the unit $\eta$ rule the only rule which requires a type-directed equality?}
+
+In our presented theory, the only judgmental equality rule which required the type-directed approach was the unit $\eta$ rule.
+\citet{altenkirch2001} present an algorithm for deciding the $\eta$ rule for the coproduct type.
+However, it's unclear if their algorithm would fit with the type-directed approach we present here.
+\citet{gilbert2019} present a type theory with a universe of definitionally irrelevant propositions.
+While similar to the unit $\eta$ rule, their $\eta$ rule for propositions requires not only the type of the two terms be known, but also the type of the type.
+
+\subsection{Could our implementation be optimized?}
+
+While our smalltt implementation as is failed to perform as well as the syntax-directed smalltt, it's not out of the question that it could be optimized further.
+We leave this optimization as future work.
+
+\subsection{Was our method of correcting for variation in performance due to memory layout effective?}
+
+Previous work has shown that a program's memory layout can drastically affect performance, with even small things like the values of environment variables affecting this layout.
+We attempted to correct for this in our statistical test, but it's unclear if we did this properly.
+Properly developing statistical methods to solve this problem would be very useful when running any sort of performance comparison between programs.

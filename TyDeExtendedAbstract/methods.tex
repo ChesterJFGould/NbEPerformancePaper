@@ -1,0 +1,280 @@
+\section{Methods}
+
+\subsection{\textit{smalltt} Implementation}
+
+% To evaluate the relative performance of the syntax and type directed equalities we benchmarkeded two versions of the same type checker, one with the syntax directed equality, and one with the type directed equality.
+% Andras Kovac's smalltt \footnote{\href{https://github.com/AndrasKovacs/smalltt}{https://github.com/AndrasKovacs/smalltt}} is a type checker for a dependent type theory quite similar to the one presented here.
+% It already uses the syntax direct equality, so we created a modified version which only differs in that it uses the type directed equality.
+% It also
+% 
+% \begin{quote}
+% \textit{Disclaimer}: smalltt includes metavariables for inferring parts of the program.
+% This means that the code for deciding judgmental equality must also implement unification for solving these metavariables.
+% Since this is a separate concern from the method for deciding judgmental equality, the code presented here will omit the cases where metavariables must be dealt with.
+% \end{quote}
+
+To evaluate the performance and utility of the recipe for type-directed judgmental equality, we have produced two modified versions of Andras Kovac's smalltt.
+The first version has the same syntax and semantics as the original smalltt, but uses a type-directed judgmental equality.
+The goal of this version is to evaluate the performance of the recipe as compared to the original smalltt type checker.
+The second version extends the first modification with the unit and dependent pair types.
+The primary goal of this version is to demonstrate that the type-directed equality can decide the unit $\eta$ rule.
+Secondarily, it demonstrates the ease of adding new constructs to the language by following the bidirectional recipe.
+
+The language in the original version of smalltt is almost identical to that presented in \autoref{fig:base-syntax}.
+It only differs from the theory considered here in two ways.
+Firstly, it includes metavariables, essentially holes in a term which are inferred via unification during type checking.
+Secondly, it uses an optimization while deciding judgmental equality to try and prematurely decide that the two terms are equal.
+This optimization exploits the fact that judgmental equality is a congruence relation with respect to substitution.
+That is to say that if $\tyEqJ{\Gamma}{n_a}{n_b}{n_t}$, then we can infer that $\tyEqJ{\Gamma}{n_a'}{n_b'}{n_t}$ where $\steps{\subst{n_a}{x}{e}}{n_a'}$ and $\steps{\subst{n_b}{x}{e}}{n_b'}$.
+Therefore, if we can detect scenarios where the same substitution is being applied to both side of an equality judgment, we can first check if the terms are equal pre-substitution.
+This optimization is of course predicated on the assumption that $n_a'$ and $n_b'$ will usually be substantially larger than $n_a$ and $n_b$.
+Neither of these should affect our performance comparison since they are present in both the original and our modified versions of smalltt.
+
+The original version of smalltt is available at \url{https://github.com/AndrasKovacs/smalltt/}, while our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the master and sigma-unit branches respectively.
+
+\subsubsection{Modifying \textit{smalltt}}
+
+Here we will present an overview of the part of the original smalltt which decides judgmental equality, and then present the overall changes we made to use a type-directed equality.
+Since inferring values for meta variables is irrelevant to the core of this thesis, we have simplified the code shown here slightly to remove most of those parts.
+The core data types and functions from the original smalltt are as follows.
+
+\newpage
+
+\begin{lstlisting}
+
+data Tm
+  = LocalVar Ix
+  | App Tm Tm Icit
+  | Lam NameIcit Tm
+  | Pi NameIcit Ty Ty
+  | U
+
+type Ty = Tm
+
+type Ix = Int
+
+type Lvl = Int
+
+data Val =
+    VLocalVar Lvl Spine
+  | VLam NameIcit Closure
+  | VPi NameIcit VTy Closure
+  | VU
+
+type VTy = Val
+
+data Spine =
+    SId
+  | SApp Spine Val
+
+data Closure = Closure Env Tm
+
+data Env =
+    ENil
+  | EDef Env Val
+
+eval :: Env -> Tm -> Val
+
+unify :: Lvl -> Val -> Val -> IO ()
+
+unifySp :: Lvl -> Spine -> Spine -> IO ()
+\end{lstlisting}
+
+Here the \lstinline{Tm} type corresponds to our expressions, \lstinline{Val} to normal forms, and \lstinline{Spine} to the neutral terms.
+Note that the \lstinline{Val} type uses deBruijn levels to represent variables instead of names.
+For example, with deBruijn levels the term $\lambda x. \lambda y. x$ would be represented as $\lambda. \lambda. 0$.
+The \lstinline{Env} type represented a group of substitutions, and so the \lstinline{eval} function corresponds to a combination of the $\steps{e}{n}$ relation and the $\subst{e}{x}{e'}$ function.
+Additionally, a \lstinline{Closure} representents a \lstinline{Env}
+Finally, \lstinline{unify} and \lstinline{unifySp} correspond to the $\stxEqJ{\Theta}{n_a}{n_b}$ judgment, but they use the current deBruijn level to generate fresh variables instead of $\Theta$.
+Both \lstinline{unify} and \lstinline{unifySp} return an \lstinline{IO ()} since they will throw an exception if the terms aren't equal or evaluate to \lstinline{return ()} if they are.
+
+\newpage
+
+Next we present the modifications made to convert smalltt to using a type-directed equality.
+
+\begin{lstlisting}
+unifyChk :: Cxt -> Val -> Val -> VTy -> IO ()
+
+unifySp :: Cxt -> VTy -> Spine -> Spine -> IO VTy
+
+type TypeCxt = Map Lvl VTy
+
+type Cxt = Cxt {lvl :: Lvl, localTypes :: TypeCxt}
+\end{lstlisting}
+
+We only needed to change the type of \lstinline{unifyChk} and \lstinline{unifySp}.
+\lstinline{unifyChk} now correponds to the $\chkEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment, while \lstinline{unifySp} now correponds to the $\synEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment.
+
+Finally we present the modifications made to add the unit and dependent pair types to our type-directed version of smalltt.
+
+%% The input \lstinline{Tm} type represents a well typed expression where all of the local variables have been replaced with deBruijn indices, and the global variables with deBruijn levels \footnote{deBruijn indices replace variables with the number of binders between them and their binding site, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 1$. Whereas deBruijn levels do the same, but number the binding sites starting at the outermost binding, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 0$}.
+%% \lstinline{Val}, the output of \lstinline{eval}, is a datatype representing an expression in $\beta$-normal form with both local global variables represented as deBruijn levels.
+%% Since there's no need to modify this part of the code, I won't discuss the implementation of the \lstinline{eval} function.
+%% The standard reference for this algorithm is \citet{Coquand1996}.
+%% 
+%% The second phase is where the bulk of the changes lie.
+%% The original functions implementing this phase were approximately the following.
+
+\begin{lstlisting}
+data Tm
+  = LocalVar Ix
+  | App Tm Tm Icit
+  | Lam NameIcit Tm
+  | Pi NameIcit Ty Ty
+  | Sigma NameIcit Ty Ty
+  | SigmaI Tm Tm
+  | Fst Tm
+  | Snd Tm
+  | Unit
+  | UnitI
+  | U
+
+data Val =
+    VLocalVar Lvl Spine
+  | VLam NameIcit Closure
+  | VPi NameIcit VTy Closure
+  | VSigma NameIcit VTy Closure
+  | VSigmaI Val Val
+  | VUnit
+  | VUnitI
+  | VU
+
+data Spine =
+    SId
+  | SApp Spine Val
+  | SFst Spine
+  | SSnd Spine
+\end{lstlisting}
+
+Here we didn't need to change the type of any functions, just add the new cases to the existing datatypes and functions.
+
+%% These check syntactic equality on values and spines, respectively, with $\eta$-rules for functions also being applied.
+%% They take the current deBruijn level as an additional parameter for when a new local variable needs to be introduced.
+%% If the values are equal, they will complete succesfully with a value of \lstinline{()}.
+%% Otherwise, they will throw an exception.
+%% 
+%% In line with the method presented in \citet{Chapman2005}, these functions were re-written as the following.
+%% 
+%% \begin{lstlisting}
+%% unifyTy :: Cxt -> VTy -> VTy -> IO ()
+%% 
+%% unifyChk :: Cxt -> Val -> Val -> VTy -> IO ()
+%% 
+%% unifySp :: Cxt -> VTy -> Spine -> Spine -> IO VTy
+%% 
+%% type TypeCxt = Map Lvl VTy
+%% 
+%% type Cxt = Cxt {lvl :: Lvl, localTypes :: TypeCxt, globalTypes :: TypeCxt}
+%% \end{lstlisting}
+%% 
+%% Here the \lstinline{unify} function has been split into two parts, one for checking judgmental equality between types, and one for checking it between terms at a specific type.
+%% However, since we have the impredicative type-in-type, we can uniquely determine \lstinline{unifyTy} by the following equation.
+%% 
+%% \begin{lstlisting}
+%% unifyTy cxt a b = unifyChk cxt a b VU
+%% \end{lstlisting}
+%% 
+%% Here, the only $\eta$ rule we have to apply is the the rule for dependent functions which takes the following form.
+%% 
+%% \begin{mathpar}
+%% \inferrule*[left={$x$ fresh}]
+%%   {\tyEqJ{\Gamma, x : D}{\appE{f}{x}}{\appE{g}{x}}{\subst{C}{y}{x}}}
+%%   {\tyEqJ{\Gamma}{f}{g}{\piE{y}{D}{C}}}
+%% \end{mathpar}
+%% 
+%% To handle it we add the following equation for \lstinline{unifyChk}
+%% 
+%% \begin{lstlisting}
+%% unifyChk cxt f g (VPi d c) = unifyChk cxt' (doApp f x) (doApp g x) (appCl c x)
+%%   where (cxt', x) = cxtNewLocal d cxt
+%% \end{lstlisting}
+%% 
+%% Here we use two new helpers, \lstinline{doApp} which applies the first argument to the second and $\beta$-reduces if necessary, and \lstinline{appCl} which substitutes its second argument into the body of its first.
+%% 
+%% \begin{lstlisting}
+%% doApp :: Val -> Val -> Val
+%% 
+%% appCl :: Closure -> Val -> Val
+%% \end{lstlisting}
+%% 
+%% Next we have the equations for the constructors of types which either don't have $\eta$-rules, or don't have decidable $\eta$-rules.
+%% In our case this is the type of types.
+%% 
+%% \begin{lstlisting}
+%% unifyChk cxt (VPi d c) (VPi d' c') VU = unifyChk cxt d d' VU >> unifyChk cxt' (appCl c x) (appCl' c' x) VU
+%%   where (cxt', x) = cxtNewLocal d cxt
+%% 
+%% unifyChk cxt VU VU VU = return ()
+%% \end{lstlisting}
+%% 
+%% The last chance our two values have to be equal is if they are a variables with a spine.
+%% 
+%% \begin{lstlisting}
+%% unifyChk cxt (VLocalVar x sp) (VLocalVar x' sp') _
+%%   | x == x' = unifySp cxt sp sp' >> return ()
+%%   | otherwise = throw (UnifyEx Conversion)
+%% 
+%% unifyChk cxt (VTopVar _ _ v) (VTopVar _ _ v') t = unifyChk cxt v v' t
+%% \end{lstlisting}
+%% 
+%% Additionally, the \lstinline{unifySp} function not only needs to check two spines for equality, but also return their type if they are equal.
+%% Since the spines themselves don't contain the variable being applied, 
+%% 
+%% \subsubsection{Extending \textit{smalltt}}
+%% 
+%% To extend version of smalltt presented in section 4.1 with the unit and dependent pair types, I first modified the syntax of both terms and values.
+%% 
+%% \begin{lstlisting}
+%% data Tm
+%%   = ...
+%%   | Sigma NameIcit Ty Ty
+%%   | SigmaI Tm Tm
+%%   | Fst Tm
+%%   | Snd Tm
+%%   | Unit
+%%   | UnitI
+%% \end{lstlisting}
+
+
+\subsection{Data Analysis}
+
+\subsubsection{The Problem}
+
+Programs don't have deterministic runtimes, but their runtimes aren't completely random either.
+We can model each run of a program as being drawn from some probability distribution, and so benchmarking a program can be viewed as sampling that program's runtime distribution.
+
+In the case considered here, where we want to know if the runtime of the modified type checker performs as well as the original, the question becomes ``is the mean of the runtime distribution of the modified type checker greater than that of the original program?".
+To answer this question, we can only use the runtime sample for each implementation collected during benchmarking.
+But, this begs the question, how can we use these samples to answer the question?
+And how large should the samples be?
+
+\subsubsection{Welch's T-Test}
+
+There are a few different methods we could use to compare the runtime distribution means of each implementation, the most popular probably being Student's t-test.
+This test would let us estimate the probability that we get the observed benchmarking results under the assumption that the runtime distribution mean of the modified type checker \textit{isn't} larger that the original.
+If the probability is low, then we can say that it is likely that the modified type checker is slower than the original.
+
+However, Student's t-test also assumes both that the variance in distribution of sample means for both type checkers are the same, and that they are normally distributed.
+The later is not an unreasonable assumption.
+The central limit theorem tells us that the distribution of sample means approaches a normal distribution as sample size increases.
+However, we have no reason to assume that the variances are equal, and so the first assumption is unreasonable.
+Therefore we use a generalization of Student's t-test called Welch's t-test which does not make this assumption \citep{Welch1947}.
+
+\subsubsection{Sample Size, Power, and Effect Size}
+
+To determine what sample size to use, we need to decide on how powerful to make our statistical test.
+In this case, the power is the probability of deciding that the modified type checker is slower under the assumption that it actually is.
+This also determines the probability of deciding that the modified type checker isn't slower even when it is, a situation we would like to avoid.
+Therefore we set the power far higher than the standard $0.8$, setting it at $0.99$, giving ourselves a 1\% chance of a false positive.
+We also set the significance level, the probability of deciding that the modified type checker is slower when it isn't, to the similar value of $0.01$.
+Additionally we set the minimum detectable effect size to $0.5$, meaning that the runtime distributions must differ by at least $0.5$ standard deviations for us to detect a difference between them.
+
+To achieve these values, the G*Power tool \citep{Faul2009} calculates that we need to run each benchmark 175 times per implementation.
+
+\subsubsection{Method}
+To collect the samples, we ran each smalltt benchmark 175 times using the hyperfine \footnote{\url{https://github.com/sharkdp/hyperfine}} tool.
+These benchmarks were run on a Intel Skylake Xeon running at 2.5GHz with 120G of ram.
+We then analyzed the collected data using the statistics Haskell library \footnote{\url{https://hackage.haskell.org/package/statistics}}.
+Our raw benchmark results and the code we used to analyze them are available at \url{https://github.com/ChesterJFGould/HonoursThesis}.
+
+

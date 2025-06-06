@@ -1,0 +1,610 @@
+\section{Main Ideas}
+
+Here we define the syntax and type-directed judgmental equalities, and also demonstrate the close connection between the type-directed equality rules and the bidirectional typing rules.
+We first present both the syntax and type-directed equalities for a small dependent type theory in which the two equalities differ only in presentation.
+Then, we present an extension to the theory with two new types.
+We add the unit type to show that the type-directed equality supports more rules than the syntax-directed equality.
+And we add dependent pairs to further demonstrate the connection between the equality and typing rules.
+% Then, to show that the type-directed equality supports more rules than the syntax-directed equality, we extend the theory with the unit type.
+
+Our purpose here is to give the reader a rigorous understanding of what these two equalities are and how they are implemented in smalltt.
+Therefore, we present the theory in a form very close to that of both smalltt implementations, but we don't prove any theorems about this theory.
+That being said, the theory we present is very similar to that proposed in \citet{altenkirch2010}.
+
+\subsection{Syntax and Semantics}
+
+\begin{figure}[!htb]
+  \begin{displaymath}
+    \begin{array}{lrcll}
+      \text{Expressions} & e & \bnfdef & x & \bnfcomment{variables} \\
+      & & \bnfalt & \lamE{x}{e} & \bnfcomment{function literal} \\
+      & & \bnfalt & \appE{e_f}{e_a} & \bnfcomment{function application} \\
+      & & \bnfalt & \piE{x}{e_d}{e_c} & \bnfcomment{dependent function type} \\
+      & & \bnfalt & \univE & \bnfcomment{type universe} \\
+      & & \bnfalt & \annE{e}{e_t} & \bnfcomment{type annotation} \\
+      \\
+      \text{Normal Forms} & n & \bnfdef & \lamE{x}{e} & \\
+      & & \bnfalt & \piE{x}{n_d}{e_c} & \\
+      & & \bnfalt & \univE & \\
+      & & \bnfalt & \nu & \\
+      \\
+      \text{Neutral Terms} & \nu & \bnfdef & x & \\
+      & & \bnfalt & \appE{\nu_f}{n_a} & \\
+      \\
+      \text{Type Contexts} & \Gamma & \bnfdef & \cdot & \\
+      & & \bnfalt & \Gamma, x : n & \\
+    \end{array}
+  \end{displaymath}
+  \caption{Syntax}
+  \label{fig:base-syntax}
+\end{figure}
+
+Before defining the two kinds of judgmental equality, we must first define the theory whose terms we want to judge equal.
+The syntax is presented in \autoref{fig:base-syntax}.
+It consists of expressions $e$ which are either variables $x$, function introduction or elimination forms, dependent function types, the type universe, or a type annotation.
+We also define a subset of expressions called normal forms.
+These are expressions which only contain redexes that are inside a binding form.
+We will use these to represent the types during type checking since we don't need to reduce them to check if they are type constructors.
+For example, if we used expressions to represent types, we could have $\appE{(\lamE{x}{\piE{y}{\unittE}{\unittE}})}{\unitE}$ which we would need to reduce to $\piE{y}{\unittE}{\unittE}$ to know that it is a type constructor.
+
+\begin{figure}[!htb]
+  \fbox{$\steps{e}{n}$}
+  \begin{mathpar}
+    \inferrule*[left=Var$\Downarrow$]
+    {
+    }
+    { \steps{x}{x}
+    }
+
+    \inferrule*[left=$\Pi$-I$\Downarrow$]
+    {
+    }
+    { \steps{\lamE{x}{e}}{\lamE{x}{e}}
+    }
+
+    \inferrule*[left=$\beta\Downarrow$]
+    { \steps{e_f}{\lamE{x}{e_b}} \\
+      \steps{\subst{e_b}{x}{e_a}}{n_b}
+    }
+    { \steps{\appE{e_f}{e_a}}{n_b}
+    }
+
+    \inferrule*[left=$\Pi$-E$\Downarrow$]
+    { \steps{e_f}{\nu_f} \\
+      \steps{e_a}{n_a}
+    }
+    { \steps{\appE{e_f}{e_a}}{\appE{\nu_f}{n_a}}
+    }
+
+    \inferrule*[left=$\Pi$-T$\Downarrow$]
+    { \steps{e_d}{n_d}
+    }
+    { \steps{\piE{x}{n_d}{e_c}}{\piE{x}{n_d}{e_c}}
+    }
+
+    \inferrule*[left=$\univE$-T$\Downarrow$]
+    {
+    }
+    { \steps{\univE}{\univE}
+    }
+
+    \inferrule*[left=Ann$\Downarrow$]
+    { \steps{e}{n}
+    }
+    { \steps{\annE{e}{e_t}}{n}
+    }
+  \end{mathpar}
+  \caption{Big Step Semantics}
+  \label{fig:base-big-step}
+\end{figure}
+
+In \autoref{fig:base-big-step} we define the operational semantics for the theory.
+In addition to being a semantics for the theory, we can view these rules as a method for turning an expression into its corresponding normal form.
+
+\begin{figure}[!htb]
+  \fbox{$\checkJ{\Gamma}{e}{n_t}$} \\
+  \fbox{$\synthJ{\Gamma}{e}{n_t}$}
+  \begin{mathpar}
+    \inferrule*[left=Var]
+    { (x : n) \in \Gamma
+    }
+    { \synthJ{\Gamma}{x}{n}
+    }
+
+    \inferrule*[left=Conv]
+    { \synthJ{\Gamma}{e}{n_t} \\
+      \tyEqJ{\Gamma}{n_t}{n_s}{\univE}
+    }
+    { \checkJ{\Gamma}{e}{n_s}
+    }
+
+    \inferrule*[left=Ann]
+    { \checkJ{\Gamma}{e_t}{\univE} \\
+      \steps{e_t}{n_t} \\
+      \checkJ{\Gamma}{e}{n_t}
+    }
+    { \synthJ{\Gamma}{\annE{e}{e_t}}{e_t}
+    }
+
+    \inferrule*[left=$\Pi$-I]
+    { \freshJ{\Gamma}{z} \\
+      \steps{\subst{e_c}{y}{z}}{n_c} \\
+      \checkJ{\Gamma, z : n_d}{\subst{e}{x}{z}}{n_c}
+    }
+    { \checkJ{\Gamma}{\lamE{x}{e}}{\piE{y}{n_d}{e_c}}
+    }
+
+    \inferrule*[left=$\Pi$-E]
+    { \synthJ{\Gamma}{e_f}{\piE{x}{n_d}{e_c}} \\
+      \checkJ{\Gamma}{e_a}{n_d} \\
+      \steps{\subst{e_c}{x}{e_a}}{n_c}
+    }
+    { \synthJ{\Gamma}{\appE{e_f}{e_a}}{n_c}
+    }
+
+    \inferrule*[left=$\Pi$-T]
+    { \checkJ{\Gamma}{e_d}{\univE} \\
+      \checkJ{\Gamma, x : e_d}{e_c}{\univE}
+    }
+    { \checkJ{\Gamma}{\piE{x}{e_d}{e_c}}{\univE}
+    }
+
+    \inferrule*[left=$\univE$-in-$\univE$]
+    {
+    }
+    { \checkJ{\Gamma}{\univE}{\univE}
+    }
+  \end{mathpar}
+  \caption{Typing Rules}
+  \label{fig:base-typing-rules}
+\end{figure}
+
+Finally, we present the typing rules for the theory in a bidirectional style \citep{Dunfield2021}.
+The check judgment $\checkJ{\Gamma}{e}{e_t}$ means that the term $e$ checks against the type $n_t$ under the context $\Gamma$.
+It is formulated such that it can be decided when given concrete terms for $\Gamma$, $e$, and $n_t$.
+The synth judgment $\synthJ{\Gamma}{e}{n_t}$ means that the type $n_t$ can be inferred for the term $e$ under the context $\Gamma$.
+It is formulated such that given the concrete terms for $\Gamma$ and $e$, it can be decided if there exists an $n_t$ such that the judgment holds.
+
+Because of the $\univE$-in-$\univE$ rule our theory is inconsistent, but we still add it for two reasons.
+First of all, the problem of adding a stratified hierarchy of universes to make the theory consistent has been studied extensively elsewhere and is orthogonal to our concerns.
+Second of all, smalltt uses this rule and so adding it ensures our presentation of the theory remains as close to it as possible.
+
+The $\Pi$-I rule uses the $\freshJ{\Gamma}{z}$ judgment to specify that the variable $z$ must not appear in the context $\Gamma$.
+It's conventional to assert that variables are fresh in a context, and so we do not define this judgment here.
+
+The Conv rule uses the typed equality judgment $\tyEqJ{\Gamma}{n_a}{n_b}{n_t}$ which we deliberately haven't defined yet.
+In the next two subsections we will present two different versions of this judgment: the syntax-directed version which can be decided by only considering $\Gamma$, $n_a$, and $n_b$, and the type-directed version which also needs to consider $n_t$.
+
+\subsection{Syntax Directed Equality}
+
+\begin{figure}[!htb]
+  \begin{displaymath}
+    \begin{array}{lrcll}
+      \text{Scope} & \Theta & \bnfdef & \cdot & \\
+      & & \bnfalt & \Theta, x & \\
+    \end{array}
+  \end{displaymath}
+  \fbox{$\tyEqJ{\Gamma}{n_a}{n_b}{n_t}$}
+  \fbox{$\stxEqJ{\Theta}{n_a}{n_b}$}
+  $\text{strip-types} : \Gamma \to \Theta$ \\
+  $\text{strip-types}(\cdot) = \cdot$ \\
+  $\text{strip-types}(\Gamma, x : n_t) = \text{strip-types}(\Gamma), x$ \\
+  \begin{mathpar}
+    \inferrule*[left=Syn]
+    { \stxEqJ{\text{strip-types}(\Gamma)}{n_a}{n_b}
+    }
+    { \tyEqJ{\Gamma}{n_a}{n_b}{n_t}
+    }
+
+    \label{rule:stx-eta-l}
+    \inferrule*[left=$\eta$-L]
+    { \freshJ{\Theta}{y} \\
+      \steps{\appE{(\lamE{x}{e_b})}{y}}{n_b} \\
+      \steps{\appE{n}{y}}{n_a} \\
+      \stxEqJ{\Theta, y}{n_b}{n_a}
+    }
+    { \stxEqJ{\Theta}{\lamE{x}{e_b}}{n}
+    }
+
+    \label{rule:stx-eta-r}
+    \inferrule*[left=$\eta$-R]
+    { \freshJ{\Theta}{y} \\
+      \steps{\appE{(\lamE{x}{e_b})}{y}}{n_b} \\
+      \steps{\appE{n}{y}}{n_a} \\
+      \stxEqJ{\Theta, y}{n_b}{n_a}
+    }
+    { \stxEqJ{\Theta}{n}{\lamE{x}{e_b}}
+    }
+
+    \label{rule:stx-pi-t}
+    \inferrule*[left=$\Pi{=}$]
+    { \stxEqJ{\Theta}{n_d}{n_d'} \\
+      \freshJ{\Theta}{y} \\
+      \steps{\subst{e_c}{x}{y}}{n_c} \\
+      \steps{\subst{e_c'}{x'}{y}}{n_c'} \\
+      \stxEqJ{\Theta, y}{n_c}{n_c'}
+    }
+    { \stxEqJ{\Theta}{\piE{x}{n_d}{e_c}}{\piE{x'}{n_d'}{e_c'}}
+    }
+
+    \inferrule*[left=$\univE{=}$]
+    {
+    }
+    { \stxEqJ{\Theta}{\univE}{\univE}
+    }
+
+    \inferrule*[left=Var${=}$]
+    {
+    }
+    { \stxEqJ{\Theta}{x}{x}
+    }
+
+    \inferrule*[left=App${=}$]
+    { \stxEqJ{\Theta}{\nu_f}{\nu_f'} \\
+      \stxEqJ{\Theta}{n_a}{n_a'}
+    }
+    { \stxEqJ{\Theta}{\appE{\nu_f}{n_a}}{\appE{\nu_f'}{n_a'}}
+    }
+  \end{mathpar}
+  \caption{Syntax Directed Equality}
+  \label{fig:base-syntax-directed-equality}
+\end{figure}
+
+In \autoref{fig:base-syntax-directed-equality} we define the typed equality judgment by appealing to the syntax-directed equality judgment $\stxEqJ{\Theta}{n_a}{n_b}$.
+The $\pi$=, $\eta$-l, and $\eta$-r rules require adding fresh variables to the context.
+However, we don't know what type these new variables should be given in the $\eta$ cases.
+Therefore we use $\Theta$ in the syntax-directed equality judgment instead of $\Gamma$, and use strip-types to turn a type context into a scope.
+
+Since we are already given terms in normal form, we don't need to consider $\beta$ equalities until we get to a binding form.
+In these cases, specifically the $\pi$=, $\eta$-l, and $\eta$-r rules, we use the big step semantics from \autoref{fig:base-big-step} to reduce all expressions to their normal form before continuing.
+
+In the $\eta$-l and $\eta$-r rules we use a trick to decide the $\eta$ rule for dependent function from only the syntax.
+In a normal form, there are only two cases which could be given a function type.
+Either the normal form is a function literal, or it is a neutral term.
+If both sides of the equality are neutral terms, then applying the $\eta$ rule won't change anything.
+Therefore, we only have to apply the function $\eta$ rule in cases where at least one side of the equality is a function literal, leading us to defining our two $\eta$ rules.
+
+\subsection{Type Directed Equality}
+
+\begin{figure}[!htb]
+  \fbox{$\tyEqJ{\Gamma}{n_a}{n_b}{n_t}$}
+  \fbox{$\chkEqJ{\Gamma}{n_a}{n_b}{n_t}$}
+  \fbox{$\synEqJ{\Gamma}{\nu_a}{\nu_b}{n_t}$}
+
+  \begin{mathpar}
+    \inferrule*
+    { \chkEqJ{\Gamma}{n_a}{n_b}{n_t}
+    }
+    { \tyEqJ{\Gamma}{n_a}{n_b}{n_t}
+    }
+
+    \inferrule*[left=Fun-$\eta$]
+    { \freshJ{\Gamma}{y} \\
+      \steps{\appE{n_a}{y}}{n_a'} \\
+      \steps{\appE{n_b}{y}}{n_b'} \\
+      \steps{\subst{e_c}{x}{y}}{n_c} \\
+      \chkEqJ{\Gamma, y : n_d}{n_a'}{n_b'}{n_c}
+    }
+    { \chkEqJ{\Gamma}{n_a}{n_b}{\piE{x}{n_d}{e_c}}
+    }
+
+    \inferrule*[left=$\Pi{=}$]
+    { \chkEqJ{\Gamma}{n_d}{n_d'}{\univE} \\
+      \freshJ{\Gamma}{y} \\
+      \steps{\subst{e_c}{x}{y}}{n_c} \\
+      \steps{\subst{e_c'}{x'}{y}}{n_c'} \\
+      \chkEqJ{\Gamma}{n_c}{n_c'}{\univE}
+    }
+    { \chkEqJ{\Gamma}{\piE{x}{n_d}{e_c}}{\piE{x'}{n_d'}{e_c'}}{\univE}
+    }
+
+    \inferrule*[left=$\univE{=}$]
+    {
+    }
+    { \chkEqJ{\Gamma}{\univE}{\univE}{\univE}
+    }
+
+    \inferrule*[left=Conv${=}$]
+    { \synEqJ{\Gamma}{\nu_a}{\nu_b}{n_t'}
+    }
+    { \chkEqJ{\Gamma}{\nu_a}{\nu_b}{n_t}
+    }
+
+    \inferrule*[left=Var${=}$]
+    { (x : n_t) \in \Gamma
+    }
+    { \synEqJ{\Gamma}{x}{x}{n_t}
+    }
+
+    \inferrule*[left=App${=}$]
+    { \synEqJ{\Gamma}{\nu_f}{\nu_f'}{\piE{x}{n_d}{e_c}} \\
+      \chkEqJ{\Gamma}{n_a}{n_a'}{n_d} \\
+      \steps{\subst{e_c}{x}{n_a}}{n_c}
+    }
+    { \synEqJ{\Gamma}{\appE{\nu_f}{n_a}}{\appE{\nu_f'}{n_a'}}{n_c}
+    }
+  \end{mathpar}
+  \caption{Type Directed Equality}
+  \label{fig:base-type-directed-equality}
+\end{figure}
+
+In \autoref{fig:base-type-directed-equality} we define the typed equality judgment in terms of the equality check judgment $\chkEqJ{\Gamma}{n_a}{n_b}{n_t}$ and the equality synth judgment $\synEqJ{\Gamma}{n_a}{n_b}{n_t}$.
+The structure of these two judgments closely follows the structure of the synth and check typing judgments from \autoref{fig:base-typing-rules}.
+Like the type check judgment, the equality check judgment can be decided when all of $\Gamma$, $n_a$, $n_b$, and $n_t$ are provided.
+And similarily, given $\Gamma$, $n_a$, and $n_b$, it can be decided if there exists an $n_t$ such that the equality synth judgment holds.
+
+We use two tricks to decide these rules.
+Firsly, we always start comparing normal forms using the equality check judgment.
+This way we always have the type we are comparing at available, so we can apply $\eta$ rules based on it.
+Secondly, the places in which normal forms appear in neutral terms (e.g. the argument of a function application) correspond to places which use the check typing judgment during type checking.
+Therefore, we can infer the type of these neutral terms and then apply the equality check judgment to them, as required by our first trick.
+
+In fact, most of the type-directed equality rules follow the same structure as their corresponding bidirectional typing rules.
+For example, the App= rule corresponds to the $\Pi$-E typing rule from \autoref{fig:base-typing-rules} and follows the same structure where synth judgment is applied to the function, and then the check judgment is applied to the argument.
+However, the Fun-$\eta$ rule differs from this pattern.
+Instead of following the structure of the $\Pi$-I typing rule, it uses the function extensionality principle to convert the problem of equality at the dependent function type into that of equality at the codomain type.
+
+Therefore, we can reuse the Pfenning bidirectional typing recipe \citep{Dunfield2021} to derive the type-directed equality rules.
+The only change we make is to replace the introduction rules for types with an $\eta$ rule we want to decide with the $\eta$ rule.
+
+\subsection{Unit and Dependent Pair Types}
+
+Up until this point, the syntax and type-directed equalities have really been the same equality but presented in two different ways.
+This is because the $\eta$ rule for dependent functions can be decided both by the syntax and type-directed equalities.
+However, once we add the Unit type this changes, since the $\eta$ rule for the unit type is not decidable by the syntax-directed equality.
+Additionally, we add the dependent pair type to further illustrate how the type-directed equality rules closely follow from to the bidirectional typing rules.
+
+\begin{figure}[!htb]
+  \begin{displaymath}
+    \begin{array}{lrcll}
+      \text{Expressions} & e & \bnfdef & ... & \\
+      & & \bnfalt & \pairE{e_f}{e_s} & \\
+      & & \bnfalt & \fstE{e} & \\
+      & & \bnfalt & \sndE{e} & \\
+      & & \bnfalt & \sigmaE{x}{e_f}{e_s} & \\
+      & & \bnfalt & \unitE & \\
+      & & \bnfalt & \unittE & \\
+      \\
+      \text{Normal Forms} & n & \bnfdef & ... & \\
+      & & \bnfalt & \pairE{n_f}{n_s} & \\
+      & & \bnfalt & \sigmaE{x}{n_f}{e_s} & \\
+      & & \bnfalt & \unitE & \\
+      & & \bnfalt & \unittE & \\
+      \\
+      \text{Neutral Terms} & \nu & \bnfdef & ... & \\
+      & & \bnfalt & \fstE{\nu} & \\
+      & & \bnfalt & \sndE{\nu} & \\
+    \end{array}
+  \end{displaymath}
+  \caption{Unit and Dependent Pair Syntax}
+  \label{fig:unit-dependent-pair-syntax}
+\end{figure}
+
+In \autoref{fig:unit-dependent-pair-syntax} we present the extension of the syntax with the unit and dependent pair types.
+The Unit type has type constructor Unit, and introduction form $\unitE$, while the dependent pair type has type former $\sigmaE{x}{e_f}{e_s}$, introduction form $\pairE{e_f}{e_s}$, and elimination forms $\fstE{e}$ and $\sndE{e}$.
+
+\begin{figure}[!htb]
+  \begin{mathpar}
+    \inferrule*[left=$\Sigma$-I$\Downarrow$]
+    { \steps{e_f}{n_f} \\
+      \steps{e_s}{n_s} \\
+    }
+    { \steps{\pairE{e_f}{e_s}}{\pairE{n_f}{n_s}}
+    }
+
+    \inferrule*[left=$\sigma_1$]
+    { \steps{e}{\pairE{n_f}{n_s}} \\
+    }
+    { \steps{\fstE{e}}{n_f}
+    }
+
+    \inferrule*[left=$\sigma_2$]
+    { \steps{e}{\pairE{n_f}{n_s}} \\
+    }
+    { \steps{\sndE{e}}{n_s}
+    }
+
+    \inferrule*[left=$\sigma$-I1$\Downarrow$]
+    { \steps{e}{\nu}
+    }
+    { \steps{\fstE{e}}{\fstE{\nu}}
+    }
+
+    \inferrule*[left=$\sigma$-I2$\Downarrow$]
+    { \steps{e}{\nu}
+    }
+    { \steps{\sndE{e}}{\sndE{\nu}}
+    }
+
+    \inferrule*[left=$\sigma$-T$\Downarrow$]
+    { \steps{e_1}{n_1}
+    }
+    { \steps{\sigmaE{x}{e_1}{e_2}}{\sigmaE{x}{n_1}{e_2}}
+    }
+
+    \inferrule*[left=$\unittE$-I$\Downarrow$]
+    {
+    }
+    { \steps{\unitE}{\unitE}
+    }
+
+    \inferrule*[left=$\unittE$-T$\Downarrow$]
+    {
+    }
+    { \steps{\unittE}{\unittE}
+    }
+  \end{mathpar}
+  \caption{Unit and Dependent Pair Semantics}
+  \label{fig:unit-dependent-pair-semantics}
+\end{figure}
+The semantics presented for the unit and dependent pairs in \autoref{fig:unit-dependent-pair-semantics} is completely standard, as are the typing rules presented in \autoref{fig:unit-dependent-pair-typing}.
+\begin{figure}[!htb]
+  \begin{mathpar}
+    \inferrule*[left=$\Sigma$-I]
+    { \checkJ{\Gamma}{e_f}{n_1} \\
+      \steps{\subst{e_2}{x}{e_s}}{n_2} \\
+      \checkJ{\Gamma}{e_s}{n_2}
+    }
+    { \checkJ{\Gamma}{\pairE{e_f}{e_s}}{\sigmaE{x}{n_1}{e_2}}
+    }
+
+    \inferrule*[left=$\Sigma$-E1]
+    { \synthJ{\Gamma}{e}{\sigmaE{x}{n_1}{e_2}} \\
+    }
+    { \synthJ{\Gamma}{\fstE{e}}{n_1}
+    }
+
+    \inferrule*[left=$\Sigma$-E2]
+    { \synthJ{\Gamma}{e}{\sigmaE{x}{n_1}{e_2}} \\
+      \steps{\subst{e_2}{x}{\fstE{e}}}{n_2}
+    }
+    { \synthJ{\Gamma}{\sndE{e}}{n_2}
+    }
+
+    \inferrule*[left=$\Sigma$-T]
+    { \checkJ{\Gamma}{e_1}{\univE} \\
+      \steps{e_1}{n_1} \\
+      \checkJ{\Gamma, x : n_1}{e_2}{\univE} \\
+    }
+    { \checkJ{\Gamma}{\sigmaE{x}{e_1}{e_2}}{\univE}
+    }
+
+    \inferrule*[left=$\unittE$-I]
+    {
+    }
+    { \checkJ{\Gamma}{\unitE}{\unittE}
+    }
+
+    \inferrule*[left=$\unittE$-T]
+    {
+    }
+    { \checkJ{\Gamma}{\unittE}{\univE}
+    }
+  \end{mathpar}
+  \caption{Unit and Dependent Pair Typing}
+  \label{fig:unit-dependent-pair-typing}
+\end{figure}
+
+\begin{figure}[!htb]
+  \begin{mathpar}
+    \inferrule*[left=$\Sigma$-$\eta$-L]
+    { \steps{\fstE{n}}{n_f'} \\
+      \steps{\sndE{n}}{n_s'} \\
+      \stxEqJ{\Theta}{n_f}{n_f'} \\
+      \stxEqJ{\Theta}{n_s}{n_s'}
+    }
+    { \stxEqJ{\Theta}{\pairE{n_f}{n_s}}{n}
+    }
+
+    \inferrule*[left=$\Sigma$-$\eta$-R]
+    { \steps{\fstE{n}}{n_f'} \\
+      \steps{\sndE{n}}{n_s'} \\
+      \stxEqJ{\Theta}{n_f}{n_f'} \\
+      \stxEqJ{\Theta}{n_s}{n_s'}
+    }
+    { \stxEqJ{\Theta}{n}{\pairE{n_f}{n_s}}
+    }
+
+    \inferrule*[left=$\Sigma$-T${=}$]
+    { \stxEqJ{\Theta}{n_1}{n_1'} \\
+      \freshJ{\Theta}{y} \\
+      \steps{\subst{e_2}{x}{y}}{n_2} \\
+      \steps{\subst{e_2'}{x'}{y}}{n_2'} \\
+      \stxEqJ{\Theta}{n_2}{n_2'}
+    }
+    { \stxEqJ{\Theta}{\sigmaE{x}{n_1}{e_2}}{\sigmaE{x'}{n_1'}{e_2'}}
+    }
+
+    \inferrule*[left=$\Sigma$-E1${=}$]
+    { \stxEqJ{\Theta}{\nu}{\nu'}
+    }
+    { \stxEqJ{\Theta}{\fstE{\nu}}{\fstE{\nu'}}
+    }
+
+    \inferrule*[left=$\Sigma$-E2${=}$]
+    { \stxEqJ{\Theta}{\nu}{\nu'}
+    }
+    { \stxEqJ{\Theta}{\sndE{\nu}}{\sndE{\nu'}}
+    }
+
+    \inferrule*[left=$\unittE$-I${=}$]
+    {
+    }
+    { \stxEqJ{\Theta}{\unitE}{\unitE}
+    }
+
+    \inferrule*[left=$\unittE$-T${=}$]
+    {
+    }
+    { \stxEqJ{\Theta}{\unittE}{\unittE}
+    }
+  \end{mathpar}
+  \caption{Unit and Dependent Pair Syntax Directed Equality}
+  \label{fig:unit-dependent-pair-syntax-directed-equality}
+\end{figure}
+
+In \autoref{fig:unit-dependent-pair-syntax-directed-equality} we present the syntax-directed equality for the unit and dependent pairs.
+We use a trick to decide the $\eta$ rule for dependent pairs similar to that used to syntactially decide the $\eta$ rule for dependent functions.
+However, the same trick doesn't work for the unit $\eta$ rule.
+In the case of dependent functions and pairs, if the terms being compare were both neutral, then applying the corresponding $\eta$ rule doesn't make a difference.
+But, for the unit type it does make a difference, since we can judge any two neutrals equal using the unit $\eta$ rule.
+Therefore, in general, we have to have the type of the two terms available to know when we should apply the unit $\eta$ rule.
+
+\begin{figure}[!htb]
+  \begin{mathpar}
+    \inferrule*[left=$\Sigma$-$\eta$]
+    { \steps{\fstE{n}}{n_f} \\
+      \steps{\fstE{n'}}{n_f'} \\
+      \chkEqJ{\Gamma}{n_f}{n_f'}{n_1} \\
+      \steps{\subst{e_2}{x}{n_f}}{n_2} \\
+      \steps{\sndE{n}}{n_s} \\
+      \steps{\sndE{n'}}{n_s'} \\
+      \chkEqJ{\Gamma}{n_s}{n_s'}{n_2}
+    }
+    { \chkEqJ{\Gamma}{n}{n'}{\sigmaE{x}{n_1}{e_2}}
+    }
+
+    \inferrule*[left=$\Sigma$-T${=}$]
+    { \chkEqJ{\Gamma}{n_1}{n_1'}{\univE} \\
+      \freshJ{\Gamma}{y} \\
+      \steps{\subst{e_2}{x}{y}}{n_2} \\
+      \steps{\subst{e_2'}{x'}{y}}{n_2'} \\
+      \chkEqJ{\Gamma}{n_2}{n_2'}{\univE}
+    }
+    { \chkEqJ{\Gamma}{\sigmaE{x}{n_1}{e_2}}{\sigmaE{x'}{n_1'}{e_2'}}{\univE}
+    }
+
+    \inferrule*[left=$\Sigma$-E1${=}$]
+    { \synEqJ{\Gamma}{\nu}{\nu'}{\sigmaE{x}{n_1}{e_2}}
+    }
+    { \synEqJ{\Gamma}{\fstE{\nu}}{\fstE{\nu'}}{n_1}
+    }
+
+    \inferrule*[left=$\Sigma$-E2${=}$]
+    { \synEqJ{\Gamma}{\nu}{\nu'}{\sigmaE{x}{n_1}{e_2}} \\
+      \steps{\subst{e_2}{x}{\fstE{\nu}}}{n_2}
+    }
+    { \synEqJ{\Gamma}{\sndE{\nu}}{\sndE{\nu'}}{n_2}
+    }
+
+    \inferrule*[left=$\unittE$-$\eta$]
+    {
+    }
+    { \chkEqJ{\Gamma}{n}{n'}{\unittE}
+    }
+
+    \inferrule*[left=$\unittE$-T${=}$]
+    {
+    }
+    { \chkEqJ{\Gamma}{\unittE}{\unittE}{\univE}
+    }
+  \end{mathpar}
+  \caption{Unit and Dependent Pair Type Directed Equality}
+  \label{fig:unit-dependent-pair-type-directed-equality}
+\end{figure}
+
+Finally, in \autoref{fig:unit-dependent-pair-type-directed-equality} we present the type-directed equality rules for the unit and dependent pair types.
+Here we decide the unit and dependent pair $\eta$ rules in much the same way as we do for the dependent function type.
+If the type we are comparing at is a unit or dependent pair, simply apply the corresponding $\eta$ and continue.
+
+
