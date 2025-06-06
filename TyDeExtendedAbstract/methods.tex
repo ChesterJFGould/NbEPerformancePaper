@@ -1,4 +1,4 @@
-\section{Methods}
+\section{Benchmarking Platform}
 Our approach is to compare two versions of 
 Andras Kovac's smalltt \footnote{\url{https://github.com/AndrasKovacs/smalltt}}, a small but realistic, and very performant, type check for type theory.
 The existing version uses a syntax-directed approach without $\eta$ rules.
@@ -39,7 +39,7 @@ This algorithm uses a bi-directional-like \todo{cite} approach to reduce the amo
 
 The original version of smalltt is available at \url{https://github.com/AndrasKovacs/smalltt/}, while our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the master and sigma-unit branches respectively.
 
-\subsection{Type Theory}
+%\subsection{Type Theory}
 
 We give an excerpt of the type-directed equality rules in \Cref{fig:unit-dependent-pair-type-directed-equality}.
 Following \citet{Chapman2005}, we have two equality judgements: the check judgement $\chkEqJ{\Gamma}{n}{n'}{A}$, which takes a type as an input and in which $\eta$ rules can be implemented, and the synth judgement $\synEqJ{\Gamma}{e}{e'}{n}$ in which $\beta$ rules are implemented and which additional output the normalized type.
@@ -98,7 +98,7 @@ Following \citet{Chapman2005}, we have two equality judgements: the check judgem
 \end{figure}
 
 
-\subsection{Modifying \textit{smalltt}}
+%\subsection{Modifying \textit{smalltt}}
 
 We present an overview of the part of the original smalltt which decides judgmental equality, and then present the overall changes we made to use a type-directed equality.
 Since inferring values for meta variables is irrelevant to the core of this thesis, we have simplified the code shown here slightly to remove most of those parts.
