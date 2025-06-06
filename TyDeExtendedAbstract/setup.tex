@@ -1,0 +1,67 @@
+\usepackage{natbib}
+\usepackage{url}
+\usepackage{doi}
+\bibliographystyle{ACM-Reference-Format}
+
+\usepackage{lipsum}
+
+
+\usepackage{mathpartir}
+\usepackage{hyperref}
+
+\usepackage{listings}
+\lstset{
+  frame=none,
+  xleftmargin=2pt,
+  % stepnumber=1,
+  % numbers=left,
+  % numbersep=5pt,
+  % numberstyle=\ttfamily\tiny\color[gray]{0.3},
+  belowcaptionskip=\bigskipamount,
+  captionpos=b,
+  escapeinside={*'}{'*},
+  language=haskell,
+  tabsize=2,
+  emphstyle={\bf},
+  commentstyle=\it,
+  stringstyle=\mdseries\rmfamily,
+  showspaces=false,
+  keywordstyle=\bfseries\rmfamily,
+  columns=flexible,
+  basicstyle=\small\sffamily,
+  showstringspaces=false,
+  morecomment=[l]\%,
+  literate={->}{{$\to$}}2 {~}{{$\sim$}}1
+}
+
+\newcommand{\bnflabel}[1]{\text{#1}}
+\newcommand{\bnfdef}{::=}
+\newcommand{\bnfalt}{\mid}
+\newcommand{\bnfcomment}[1]{}% \text{\small \textit{#1}}}
+
+\newcommand{\lamE}[2]{\lambda #1. \text{ } #2}
+\newcommand{\appE}[2]{#1 \text{ } #2}
+\newcommand{\piE}[3]{\Pi #1 : #2. \text{ } #3}
+\newcommand{\pairE}[2]{\langle #1, #2 \rangle}
+\newcommand{\fstE}[1]{\text{fst } #1}
+\newcommand{\sndE}[1]{\text{snd } #1}
+\newcommand{\sigmaE}[3]{\Sigma #1 : #2. \text{ } #3}
+\newcommand{\unitE}{\langle \rangle}
+\newcommand{\unittE}{\text{Unit}}
+\newcommand{\univE}{\text{Type}}
+\newcommand{\annE}[2]{#1 : #2}
+
+\newcommand{\checkJ}[3]{#1 \vdash #2 \Leftarrow #3}
+\newcommand{\synthJ}[3]{#1 \vdash #2 \Rightarrow #3}
+\newcommand{\tyEqJ}[4]{#1 \vdash #2 = #3 : #4}
+\newcommand{\stxEqJ}[3]{#1 \vdash #2 = #3}
+\newcommand{\chkEqJ}[4]{#1 \vdash #2 = #3 \Leftarrow #4}
+\newcommand{\synEqJ}[4]{#1 \vdash #2 = #3 \Rightarrow #4}
+\newcommand{\freshJ}[2]{#1 \vdash #2 \text{ fresh}}
+\newcommand{\steps}[2]{#1 \Downarrow #2}
+
+\newcommand{\subst}[3]{#1 [#2 \mapsto #3]}
+
+\newcommand{\mycomment}[1]{}
+
+
