@@ -102,7 +102,7 @@ But how much more performant, in what situations, and is that performance worth 
 It could be the case that handling type-directed rules causes untenable performance loss, or requires unwieldy implementation, meaning theories which require them should be avoided.
 On the other hand, perhaps handling type-directed rule has only minimal performance cost and is quite simple to implement.
 The problem is that no apples-to-apples comparison between type-direct and syntax-direct approach has been made, and so there is currently no good way to decide between them beyond consulting a developer who has tried both, in an unknown context, and applying their subjective judgement to your context.
-We would like to make these folklore claims more precise.
+We would like to make these folklore claims more precise, and enable better informed choices.
 
 %The algorithm described by \citet{Coquand1996} takes the easy way out and excludes these rules from the theory, resulting in a weaker, syntax-directed, judgemental equality.
 %However, doing so puts the burden of proof on the user of the theory when a type-directed rule is required for a program to type check.
