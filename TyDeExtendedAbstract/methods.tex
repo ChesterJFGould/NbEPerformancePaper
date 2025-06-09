@@ -7,7 +7,7 @@ The first merely transitions to a type-directed approach, while the second exten
 Our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the master and sigma-unit branches respectively.
 To implement the type-directed algorithm, we follow the approach of \citet{Chapman2005}, who provide systematic approach to deriving an algorithm which supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
 The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
-This algorithm uses a bi-directional-like \todo{cite. Chester: I'm not sure that there is a citation here, the Chapman paper doesn't really analyze this connection} approach to reduce the amount of type information that is carried through the equality judgement.
+This algorithm uses an approach similar to bidirectional typing~\cite{Dunfield2021} to reduce the amount of type information that is carried through the equality judgement.
 %Another approach is documented by Andras Kovacs in his \textit{elaboration-zoo} \footnote{\url{https://github.com/AndrasKovacs/elaboration-zoo}}.
 %There, the type of each term is calculated during normalization and then stored with the normalized term, so it can be inspected as needed during the equality check.
 
@@ -209,7 +209,7 @@ We only needed to change the type of \lstinline{unifyChk} and \lstinline{unifySp
 \lstinline{unifyChk} now correponds to the $\chkEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment, while \lstinline{unifySp} now correponds to the $\synEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment.
 We also add the unit and dependent pair types to our type-directed version of smalltt.
 
-\todo{Anything else we want to say?}
+\todo{Anything else we want to say? Perhaps mention the types are also normalized, mention difference between n and e non-terminals.}
 
 %% The input \lstinline{Tm} type represents a well typed expression where all of the local variables have been replaced with deBruijn indices, and the global variables with deBruijn levels \footnote{deBruijn indices replace variables with the number of binders between them and their binding site, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 1$. Whereas deBruijn levels do the same, but number the binding sites starting at the outermost binding, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 0$}.
 %% \lstinline{Val}, the output of \lstinline{eval}, is a datatype representing an expression in $\beta$-normal form with both local global variables represented as deBruijn levels.
