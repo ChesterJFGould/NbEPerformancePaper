@@ -197,8 +197,8 @@ unifySp :: Cxt -> VTy -> Spine -> Spine -> IO VTy
 On the left, the \lstinline{Tm} type corresponds to our expressions, \lstinline{Val} to normal forms, and \lstinline{Spine} to the neutral terms.
 The \lstinline{Val} type uses de Bruijn levels to represent variables instead of names.
 For example, with de Bruijn levels, the term $\lambda x. \lambda y. x$ is represented as $\lambda. \lambda. 0$.
-The \lstinline{Env} type represented a group of substitutions, and so the \lstinline{eval} function corresponds to a combination of the $\steps{e}{n}$ relation and the $\subst{e}{x}{e'}$ function.
-Additionally, a \lstinline{Closure} represents a \lstinline{Env} applied to a term.\todo{Is this explanation clear? Maybe describe as an explicit substitution?}
+The \lstinline{Env} type represents a group of substitutions, and so the \lstinline{eval} function corresponds to a combination of the $\steps{e}{n}$ relation and the $\subst{e}{x}{e'}$ function.
+A \lstinline{Closure} represents a \lstinline{Env} applied to a term.
 Finally, \lstinline{unify} and \lstinline{unifySp} correspond to the syntax-directed equality judgment $\stxEqJ{\Gamma}{n_a}{n_b}$ judgement, which elides types, but uses the current de Bruijn level to generate fresh variables instead of $\Gamma$.
 Both \lstinline{unify} and \lstinline{unifySp} return an \lstinline{IO ()} since they will throw an exception if the terms aren't equal or evaluate to \lstinline{return ()} if they are.
 
