@@ -43,7 +43,7 @@ The results for each benchmark are normalized so that the times for the typed-di
 Overall, the type-directed implementation performs worse, being on average 3.4 times slower than the syntax-directed implementation.
 In the case of the stlc100k benchmark, the type-directed implementation failed to complete due to running out of memory.
 We represent this as a column which continues off the top of the graph to infinity.
-\todo{How does this compare to e.g. Rocq or Agda?}
+In comparison, benchmark numbers taken from equivalent benchmark suites show that Agda and Lean respectively perform 80 and 38 times slower on average than the syntax-directed implementation \citep{smalltt}.
 
 We conjecture that the main reason for this discrepancy is that the syntax-directed implementation is able to take greater advantange of glued evaluation.
 Glued evaluation exploits two facts to speed up the judgemental equality check.

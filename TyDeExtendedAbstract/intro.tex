@@ -7,7 +7,7 @@ int_or_string : (b : Bool) -> (if b then Int else String)
 int_or_string = \b -> if b then 3141 else "Hello, World!"
 \end{verbatim}
 }
-When applied to \texttt{true}, it will return the \texttt{Int} "3141".
+When applied to \texttt{true}, it will return the \texttt{Int} 3141.
 When applied to \texttt{false}, it will return the \texttt{String "Hello, World!"}.
 We can even express such facts as types.
 {\small
@@ -17,18 +17,18 @@ int_or_string_theorem = reflexivity
 \end{verbatim}
 }
 
-Type checking these requires deciding equality between two expressions.
+Type-checking these requires deciding equality between two expressions.
 The typing judgement $\Gamma \vdash e : A$ (expression $e$ has type $A$ with free variables $\Gamma$), must reason about equality of expressions.
-In the true branch of \verb|int_or_string| we make the judgement $\vdash 3141 : ({\small\verb|if true then Int else String|})$, and must reason this type is equal {\small\verb|Int|}.
+In the true branch of \verb|int_or_string| we make the judgement $\vdash 3141 : ({\small\verb|if true then Int else String|})$, and must reason this type is equal to {\small\verb|Int|}.
 
 Equality is captured by judgements of the form $\Gamma \vdash e_1 = e_2 : A$ ($e_1$ is equal to $e_2$ at type $A$ with free variables $\Gamma$).
 The two judgements interact through the following typing rule.
 \begin{mathpar}
   \inferrule*[left=Conv]{\Gamma \vdash e : B \\ \Gamma \vdash A = B : \texttt{Type}}{\Gamma \vdash e : A}
 \end{mathpar}
-How to implement decisions procedures for judgements of this form is an oft debated topic.
-
 An expression $e$ of type $B$ can also be considered of type $A$ so long as $A$ and $B$ are equal.
+
+How to implement decisions procedures for judgements of this form is an oft debated topic.
 
 Our example relies on the following two rules.
 \begin{mathpar}
@@ -64,8 +64,8 @@ Another group of rules, called $\eta$ rules, give us additional equalities that 
 \end{mathpar}
 The Fun-$\eta$ rule gives a function extensionality principle for terms of a function type.
 The Unit-$\eta$ rule implies the Unit type has the single element $\unitE$.
-Since there is only one element of the Unit type, all expressions of Unit type equal.
-This rule lets us type check the following program.
+Since there is only one element of the Unit type, all expressions of Unit type are equal.
+This rule lets us type-check the following program.
 {\small
 \begin{verbatim}
 unit_contractible : (x : Unit) -> (y : Unit) -> x = y
@@ -100,8 +100,8 @@ However, another design decision remains: how to handle the type-directed $\eta$
 Claims abound that syntax-directed approaches are more performant than those that integrate type-directed rules.
 But how much more performant, in what situations, and is that performance worth the loss in expressivity?
 It could be the case that handling type-directed rules causes untenable performance loss, or requires unwieldy implementation, meaning theories which require them should be avoided.
-On the other hand, perhaps handling type-directed rule has only minimal performance cost and is quite simple to implement.
-The problem is that no apples-to-apples comparison between type-direct and syntax-direct approach has been made, and so there is currently no good way to decide between them beyond consulting a developer who has tried both, in an unknown context, and applying their subjective judgement to your context.
+On the other hand, perhaps handling type-directed rules has only minimal performance cost and is quite simple to implement.
+The problem is that no apples-to-apples comparison between type-directed and syntax-directed approaches has been made, and so there is currently no good way to decide between them beyond consulting a developer who has tried both, in an unknown context, and applying their subjective judgement to your context.
 We would like to make these folklore claims more precise, and enable better informed choices.
 
 %The algorithm described by \citet{Coquand1996} takes the easy way out and excludes these rules from the theory, resulting in a weaker, syntax-directed, judgemental equality.
