@@ -55,7 +55,7 @@ Since we can only compare terms with the same type for equality, we must first c
 In the type-directed implementation, however, we still fully normalize the type of both terms, since we need to know if it is a type at which we can apply an $\eta$ rule.
 
 This conjecture leads us to the prediction that the performance difference between the syntax and type-directed implementations should correlate with the complexity of types used in the benchmark.
-Indeed we find that the benchmark for which the syntax and type-directed implementations are closest is the asymptotics benchmark which contains very little type-level computation, while the difference for the stlc benchmarks, which use quite complicated types to encode the syntax of the simply-typed lambda calculus, is much larger.
+Indeed we find that the benchmark for which the syntax and type-directed implementations are closest is the asymptotics benchmark which contains very little type-level computation, while the difference for the stlc benchmarks, which use quite complicated types to encode the syntax of the simply typed $\lambda$-calculus, is much larger.
 
 As future work, we would like to further investigate this conjecture, and if it proves to be true, investigate if we can improve the performance of the type-directed approach.
 
