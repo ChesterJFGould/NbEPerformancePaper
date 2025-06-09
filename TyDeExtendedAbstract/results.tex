@@ -45,10 +45,10 @@ In the case of the stlc100k benchmark, the type-directed implementation failed t
 We represent this as a column which continues off the top of the graph to infinity.
 \todo{How does this compare to e.g. Rocq or Agda?}
 
-We conjecture that the main reason for this discrepancy is that the syntax-directed implementation is able to take greater advantange of an optimization referred to as glued evaluation.
-Glued evaluation exploits two facts to speed up the judgmental equality check.
-Both that substitution and evaluation are functions with respect to judgmental equality, i.e. if $\tyEqJ{\Gamma, x : A}{e}{e'}{B}$ then both $\tyEqJ{\Gamma}{\subst{e}{x}{d}}{\subst{e'}{x}{d}}{B}$ and $\tyEqJ{\Gamma}{v}{v'}{B}$ where $\steps{e}{n}$ and $\steps{e'}{n'}$.
-Using this fact, we can avoid normalizing or performing a substitution on terms we are checking for equality if they are already judgmentally equal.
+We conjecture that the main reason for this discrepancy is that the syntax-directed implementation is able to take greater advantange of glued evaluation.
+Glued evaluation exploits two facts to speed up the judgemental equality check.
+Both that substitution and evaluation are functions with respect to judgemental equality, i.e. if $\tyEqJ{\Gamma, x : A}{e}{e'}{B}$ then both $\tyEqJ{\Gamma}{\subst{e}{x}{d}}{\subst{e'}{x}{d}}{B}$ and $\tyEqJ{\Gamma}{v}{v'}{B}$ where $\steps{e}{n}$ and $\steps{e'}{n'}$.
+Using this fact, we can avoid normalizing or performing a substitution on terms we are checking for equality if they are already judgementally equal.
 
 Glued evaluation comes to a head when comparing terms whose types contain many redexes.
 Since we can only compare terms with the same type for equality, we must first compare the types of the terms, and glued evaluation lets us perform this comparison without computing many of the redexes.
