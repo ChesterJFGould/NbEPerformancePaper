@@ -1,6 +1,6 @@
 \section{Introduction}
 Dependently typed languages treat types as first class values, enabling computation in types.
-Consider the following function.
+Consider the following.
 {\small
 \begin{verbatim}
 int_or_string : (b : Bool) -> (if b then Int else String)
@@ -18,11 +18,11 @@ int_or_string_theorem = reflexivity
 }
 
 Type checking these requires deciding equality between two expressions.
-The typing judgement $\Gamma \vdash e : A$ (expression $e$ has type $A$ with free variables $\Gamma$), must reason about execution (or at least equality) of programs.
+The typing judgement $\Gamma \vdash e : A$ (expression $e$ has type $A$ with free variables $\Gamma$), must reason about equality of expressions.
 In the true branch of \verb|int_or_string| we make the judgement $\vdash 3141 : ({\small\verb|if true then Int else String|})$, and must reason this type is equal {\small\verb|Int|}.
 
-Equality is captured by judgements of the form $\Gamma \vdash a = b : A$ ($a$ is equal to $b$ at type $A$ with free variables $\Gamma$).
-The two judgements then interact with each other with the following typing rule.
+Equality is captured by judgements of the form $\Gamma \vdash e_1 = e_2 : A$ ($e_1$ is equal to $e_2$ at type $A$ with free variables $\Gamma$).
+The two judgements interact through the following typing rule.
 \begin{mathpar}
   \inferrule*[left=Conv]{\Gamma \vdash e : B \\ \Gamma \vdash A = B : \texttt{Type}}{\Gamma \vdash e : A}
 \end{mathpar}
@@ -74,11 +74,11 @@ unit_contractible x y = reflexivity
 }
 
 As \citet{Abel2013} shows, a widely used approach for deciding judgemental equality is normalization by evaluation (NbE).
-An algorithm for deciding judgemental equality is said to use NbE when it maps the syntax of a language into a semantic domain and then back into syntax.
-Since judgementally equal pieces of syntax will actually be equal in the semantic domain, going there, then back into syntax makes them syntactically equal (a process referred to as ``normalization").
-NbE uses this to turn the problem of deciding judgemental equality into one of giving semantics to syntax and then deciding syntactic equality.
+An NbE algorithm maps the syntax of a language into a semantic domain and then back into syntax.
+Since judgementally equal pieces of syntax will be equal in the semantic domain, going there, then back into syntax makes them syntactically equal (a process referred to as ``normalization").
+NbE uses this process to turn the problem of deciding judgemental equality into one of giving semantics to syntax and then deciding syntactic equality.
 
-Simple NbE algorithms implement an environment passing interpreter (henceforth referred to as NbE interpreters) such as \citet{Coquand1996} or \citet{Chapman2005}.
+Simple NbE algorithms implement an environment passing interpreter such as \citet{Coquand1996} or \citet{Chapman2005}.
 %Other algorithms are either much larger in scale, such as the compiler into bytecode described in \citet{Grgoire2002}, or require the knowledge of very dense mathematics to understand such as \citet{Ahman2013}.
 These interpreters can have performance competitive with the widely used dependently typed languages, as \citet{smalltt} demonstrates with smalltt.
 
@@ -98,14 +98,11 @@ These interpreters can have performance competitive with the widely used depende
 However, another design decision remains: how to handle the type-directed $\eta$ rules (if at all).
 
 Claims abound that syntax-directed approaches are more performant than those that integrate type-directed rules.
-But how much more performant, and is that performance worth the loss in expressivity?
-\todo{Citations for such folklore claims?}
-
+But how much more performant, in what situations, and is that performance worth the loss in expressivity?
 It could be the case that handling type-directed rules causes untenable performance loss, or requires unwieldy implementation, meaning theories which require them should be avoided.
-On the other hand, one of the approaches to handling them described above could have minimal performance cost and be quite simple to implement.
-The problem is that no apples-to-apples comparison between them has been made, and so there is currently no good way to decide between them.
-
-We would like to change that.
+On the other hand, perhaps handling type-directed rule has only minimal performance cost and is quite simple to implement.
+The problem is that no apples-to-apples comparison between type-direct and syntax-direct approach has been made, and so there is currently no good way to decide between them beyond consulting a developer who has tried both, in an unknown context, and applying their subjective judgement to your context.
+We would like to make these folklore claims more precise.
 
 %The algorithm described by \citet{Coquand1996} takes the easy way out and excludes these rules from the theory, resulting in a weaker, syntax-directed, judgemental equality.
 %However, doing so puts the burden of proof on the user of the theory when a type-directed rule is required for a program to type check.
