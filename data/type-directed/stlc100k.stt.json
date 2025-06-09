@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "command": "cabal run smalltt bench/stlc100k.stt",
+      "mean": 1e500,
+      "stddev": 0,
+      "median": 1e500,
+      "user": 1e500,
+      "system": 1e500,
+      "min": 1e500,
+      "max": 1e500,
+      "times": [
+        1e500,
+        1e500,
+        1e500,
+        1e500,
+        1e500,
+        1e500,
+        1e500,
+        1e500,
+        1e500,
+        1e500
+      ],
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}
