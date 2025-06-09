@@ -59,6 +59,10 @@ Indeed we find that the benchmark for which the syntax and type-directed impleme
 
 As future work, we would like to further investigate this conjecture, and if it proves to be true, investigate if we can improve the performance of the type-directed approach.
 
+There are other procedures for deriving a type-directed algorithm.
+For example, in \citet{elabzoo}, the type of each term is calculated during normalization and then stored with the normalized term, so it can be inspected as needed during the equality check.
+Although this approach may carry more type information around, if the performance difference is caused by normalizing types and not by allocating types, this could be more performant.
+
 % In \autoref{fig:results} we can see the results of the performance comparison between the original syntax-directed smalltt and our modified type-directed smalltt.
 % The p-value is the probability that we got the observed benchmark results under the assumption that our modified version smalltt isn't slower than the original.
 % Across the board this probability is very small, and so it seems likely that our modified version of smalltt is slower than the original.
