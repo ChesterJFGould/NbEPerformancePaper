@@ -4,7 +4,7 @@ The existing version uses a syntax-directed approach without $\eta$ rules.
 
 We implement two modified version of smalltt with type-directed rules, trying to stay true to the performance consideration of smalltt.
 The first merely transitions to a type-directed approach, while the second extends the type theory with $\eta$ for dependent pairs ($\Sigma$) and Unit.
-Our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the master and sigma-unit branches respectively.
+Our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the \texttt{master} and \texttt{sigma-unit} branches respectively.
 
 To implement the type-directed algorithm, we follow the approach of \citet{Chapman2005}, who provide systematic approach to deriving an algorithm that supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
 The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
