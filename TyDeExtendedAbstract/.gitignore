@@ -1,4 +1,6 @@
 *
+!images/
+!images/*.png
 !.gitignore
 !*.pdf
 !*.bib
