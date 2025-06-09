@@ -59,7 +59,7 @@ Indeed we find that the benchmark for which the syntax and type-directed impleme
 
 As future work, we would like to further investigate this conjecture, and if it proves to be true, investigate if we can improve the performance of the type-directed approach.
 
-There are other procedures for deriving a type-directed algorithm.
+There are other procedures for deriving a type-directed algorithm, and we'd like to integrate these into our comparison.
 For example, in \citet{elabzoo}, the type of each term is calculated during normalization and then stored with the normalized term, so it can be inspected as needed during the equality check.
 Although this approach may carry more type information around, if the performance difference is caused by normalizing types and not by allocating types, this could be more performant.
 
