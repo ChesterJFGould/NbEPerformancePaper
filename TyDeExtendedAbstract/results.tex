@@ -38,28 +38,28 @@
 
 In \autoref{fig:results} we can see the results of the performance comparison between the original syntax-directed smalltt and our modified type-directed smalltt.
 Each benchmark was run ten times on an AMD Ryzen 9 3900x processor with 16G of memory.
-The results for each benchmark are normalized so that the times for the typed-directed implementation are given as a multiple of the syntax-directed times.
+The results for each benchmark are presented so that the times for the type-directed implementation are given as a multiple of the syntax-directed times, with the syntax-directed times normalized to have a mean of 1.
 
 Overall, the type-directed implementation performs worse, being on average 3.4 times slower than the syntax-directed implementation.
 In the case of the stlc100k benchmark, the type-directed implementation failed to complete due to running out of memory.
 We represent this as a column which continues off the top of the graph to infinity.
 In comparison, benchmark numbers taken from equivalent benchmark suites show that Agda and Lean respectively perform 80 and 38 times slower on average than the syntax-directed implementation \citep{smalltt}.
 
-We conjecture that the main reason for this discrepancy is that the syntax-directed implementation is able to take greater advantange of glued evaluation.
-Glued evaluation exploits two facts to speed up the judgemental equality check.
-Both that substitution and evaluation are functions with respect to judgemental equality, i.e. if $\tyEqJ{\Gamma, x : A}{e}{e'}{B}$ then both $\tyEqJ{\Gamma}{\subst{e}{x}{d}}{\subst{e'}{x}{d}}{B}$ and $\tyEqJ{\Gamma}{n}{n'}{B}$ where $\steps{e}{n}$ and $\steps{e'}{n'}$.
-Using this fact, we can avoid normalizing or performing a substitution on terms we are checking for equality if they are already judgementally equal.
+We conjecture that the main reason for the discrepancy between the syntax and type-directed implementations, is that the syntax-directed implementation is able to take greater advantange of glued evaluation.
+Glued evaluation exploits the fact that substitution and evaluation are functions with respect to judgmental equality to speed up the judgmental equality check.
+In other words, if $\tyEqJ{\Gamma, x : A}{e}{e'}{B}$ then both $\tyEqJ{\Gamma}{\subst{e}{x}{d}}{\subst{e'}{x}{d}}{B}$ and $\tyEqJ{\Gamma}{n}{n'}{B}$ where $\steps{e}{n}$ and $\steps{e'}{n'}$.
+Using this fact, we can avoid normalizing or performing a substitution on terms we are checking for equality if they are already judgmentally equal.
 
 Glued evaluation comes to a head when comparing terms whose types contain many redexes.
 Since we can only compare terms with the same type for equality, we must first compare the types of the terms, and glued evaluation lets us perform this comparison without computing many of the redexes.
 In the type-directed implementation, however, we still fully normalize the type of both terms, since we need to know if it is a type at which we can apply an $\eta$ rule.
 
 This conjecture leads us to the prediction that the performance difference between the syntax and type-directed implementations should correlate with the complexity of types used in the benchmark.
-Indeed we find that the benchmark for which the syntax and type-directed implementations are closest is the asymptotics benchmark which contains very little type-level computation, while the difference for the stlc benchmarks, which use quite complicated types to encode the syntax of the simply typed $\lambda$-calculus, is much larger.
+Indeed, we find that the benchmark for which the syntax and type-directed implementations are closest is the asymptotics benchmark which contains very little type-level computation, while the difference for the stlc benchmarks, which use quite complicated types to encode the syntax of the simply typed $\lambda$-calculus, is much larger.
 
 As future work, we would like to further investigate this conjecture, and if it proves to be true, investigate if we can improve the performance of the type-directed approach.
 
-There are other procedures for deriving a type-directed algorithm, and we'd like to integrate these into our comparison.
+Finally, there are other procedures for deriving a type-directed algorithm, and we'd like to integrate these into our comparison.
 For example, in \citet{elabzoo}, the type of each term is calculated during normalization and then stored with the normalized term, so it can be inspected as needed during the equality check.
 This approach may have different performance characteristics, but only supports the type-directed rule for Unit, using a syntax-directed method for $\Sigma$.
 It's unclear whether either approach scales to other rules that require types, such as coproducts~\cite{altenkirch2001}.

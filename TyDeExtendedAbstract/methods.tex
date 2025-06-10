@@ -9,9 +9,9 @@ Our two modified versions are available at \url{https://github.com/ChesterJFGoul
 To implement the type-directed algorithm, we follow the approach of \citet{Chapman2005}, who provide a systematic approach to deriving an algorithm that supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
 The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
 This algorithm uses an approach similar to bidirectional typing~\cite{Dunfield2021} to reduce the amount of type information that is carried through the equality judgement.
-\citet{Chapman2005} divide equality into two judgements: the check judgement $\chkEqJ{\Gamma}{n}{n'}{A}$, which takes a type as an input and in which $\eta$ rules can be implemented, and the synth judgement $\synEqJ{\Gamma}{e}{e'}{n}$ in which $\beta$ rules are implemented and which additional output the normalized type.
+\citet{Chapman2005} divide equality into two judgements: the check judgement $\chkEqJ{\Gamma}{n}{n'}{A}$, which takes a type as an input and in which $\eta$ rules can be implemented, and the synth judgement $\synEqJ{\Gamma}{\nu}{\nu'}{A}$ which checks two neutral forms for equality and additionally outputs their type.
 We give an excerpt of the type-directed equality rules in \Cref{fig:unit-dependent-pair-type-directed-equality}.
-In these judgements, the metavariable $n$ indicates terms that are normal with respect to $\beta$ rules.
+In these judgements, the metavariable $n$ indicates terms that are normal with respect to $\beta$ rules, while $\nu$ indicates a neutral term, that is, a series of destructors applied to a free variable.
 
 % To evaluate the relative performance of the syntax and type directed equalities we benchmarkeded two versions of the same type checker, one with the syntax directed equality, and one with the type directed equality.
 % Andras Kovac's smalltt \footnote{\url{https://github.com/AndrasKovacs/smalltt}} is a type checker for a dependent type theory quite similar to the one presented here.
@@ -199,13 +199,13 @@ On the left, the \lstinline{Tm} type corresponds to our expressions, \lstinline{
 The \lstinline{Val} type uses de Bruijn levels to represent variables instead of names.
 For example, with de Bruijn levels, the term $\lambda x. \lambda y. x$ is represented as $\lambda. \lambda. 0$.
 The \lstinline{Env} type represents a group of substitutions, and so the \lstinline{eval} function corresponds to a combination of the $\steps{e}{n}$ relation and the $\subst{e}{x}{e'}$ function.
-A \lstinline{Closure} represents a \lstinline{Env} applied to a term.
-Finally, \lstinline{unify} and \lstinline{unifySp} correspond to the syntax-directed equality judgment $\stxEqJ{\Gamma}{n_a}{n_b}$ judgement, which elides types, but uses the current de Bruijn level to generate fresh variables instead of $\Gamma$.
+A \lstinline{Closure} represents an \lstinline{Env} applied to a term.
+Finally, \lstinline{unify} and \lstinline{unifySp} correspond to the syntax-directed equality judgment $\stxEqJ{\Gamma}{n}{n'}$, which elides types, but uses the current de Bruijn level to generate fresh variables instead of $\Gamma$.
 Both \lstinline{unify} and \lstinline{unifySp} return an \lstinline{IO ()} since they will throw an exception if the terms aren't equal or evaluate to \lstinline{return ()} if they are.
 
 On the right, we present the modifications made to convert smalltt to implement type-directed equality.
 We only needed to change the type of \lstinline{unifyChk} and \lstinline{unifySp}.
-\lstinline{unifyChk} now correponds to the $\chkEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment, while \lstinline{unifySp} now correponds to the $\synEqJ{\Gamma}{n_a}{n_b}{n_t}$ judgment.
+\lstinline{unifyChk} now corresponds to the $\chkEqJ{\Gamma}{n}{n'}{A}$ judgment, while \lstinline{unifySp} now corresponds to the $\synEqJ{\Gamma}{\nu}{\nu'}{A}$ judgment.
 We also add the unit and dependent pair types to our type-directed version of smalltt.
 
 %% The input \lstinline{Tm} type represents a well typed expression where all of the local variables have been replaced with deBruijn indices, and the global variables with deBruijn levels \footnote{deBruijn indices replace variables with the number of binders between them and their binding site, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 1$. Whereas deBruijn levels do the same, but number the binding sites starting at the outermost binding, e.g. $\lambda x. \lambda y. x$ becomes $\lambda. \lambda. 0$}.
