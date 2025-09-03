@@ -40,15 +40,16 @@ In \autoref{fig:results} we can see the results of the performance comparison be
 Each benchmark was run ten times on an AMD Ryzen 9 3900x processor with 16G of memory.
 The results for each benchmark are presented so that the times for the type-directed implementation are given as a multiple of the syntax-directed times, with the syntax-directed times normalized to have a mean of 1.
 
-Overall, the type-directed implementation performs worse, being on average 3.4 times slower than the syntax-directed implementation.
+Overall, the type-directed implementation performs worse, being on average 3.4 times slower than the syntax-directed implementation (excluding the benchmarks which didn't finish).
 In the case of the stlc100k benchmark, the type-directed implementation failed to complete due to running out of memory.
 We represent this as a column which continues off the top of the graph to infinity.
 In comparison, benchmark numbers taken from equivalent benchmark suites show that Agda and Lean respectively perform 80 and 38 times slower on average than the syntax-directed implementation \citep{smalltt}.
 
 We conjecture that the main reason for the discrepancy between the syntax and type-directed implementations, is that the syntax-directed implementation is able to take greater advantange of glued evaluation.
-Glued evaluation exploits the fact that substitution and evaluation are functions with respect to judgmental equality to speed up the judgmental equality check.
+% Glued evaluation exploits the fact that substitution and evaluation are functions with respect to judgmental equality to speed up the judgmental equality check.
+Glued evaluation exploits the fact that both substitution and evaluation respect judgmental equality to speed up the judgmental equality check.
 In other words, if $\tyEqJ{\Gamma, x : A}{e}{e'}{B}$ then both $\tyEqJ{\Gamma}{\subst{e}{x}{d}}{\subst{e'}{x}{d}}{B}$ and $\tyEqJ{\Gamma}{n}{n'}{B}$ where $\steps{e}{n}$ and $\steps{e'}{n'}$.
-Using this fact, we can avoid normalizing or performing a substitution on terms we are checking for equality if they are already judgmentally equal.
+Using these facts, we can avoid normalizing or performing a substitution on terms we are checking for equality if they are already judgmentally equal.
 
 Glued evaluation comes to a head when comparing terms whose types contain many redexes.
 Since we can only compare terms with the same type for equality, we must first compare the types of the terms, and glued evaluation lets us perform this comparison without computing many of the redexes.

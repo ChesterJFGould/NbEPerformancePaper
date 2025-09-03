@@ -1,12 +1,12 @@
 \section{Benchmarking Platform}
-Our approach is to compare two versions of smalltt~\cite{smalltt}, a small but realistic, and very performant, type-checker for a dependent type theory.
+Our approach is to compare two versions of smalltt~\cite{smalltt}.
 The existing version uses a syntax-directed approach with $\eta$ rules for functions.
 
 We implement two modified versions of smalltt with type-directed rules, trying to stay true to the performance consideration of smalltt.
 The first merely transitions to a type-directed approach, while the second extends the type theory with $\eta$ for dependent pairs ($\Sigma$) and Unit.
 Our two modified versions are available at \url{https://github.com/ChesterJFGould/smalltt} on the \texttt{master} and \texttt{sigma-unit} branches respectively.
 
-To implement the type-directed algorithm, we follow the approach of \citet{Chapman2005}, who provide a systematic approach to deriving an algorithm that supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
+To implement the type-directed algorithm, we follow the approach of \citet{Chapman2005}, who provide a systematic approach to derive an algorithm that supports type-directed rules by giving the type of the two normalized terms as an argument to the procedure deciding their equality.
 The procedure can then inspect the type when it comes across a situation in which a type-directed rule is applicable.
 This algorithm uses an approach similar to bidirectional typing~\cite{Dunfield2021} to reduce the amount of type information that is carried through the equality judgement.
 \citet{Chapman2005} divide equality into two judgements: the check judgement $\chkEqJ{\Gamma}{n}{n'}{A}$, which takes a type as an input and in which $\eta$ rules can be implemented, and the synth judgement $\synEqJ{\Gamma}{\nu}{\nu'}{A}$ which checks two neutral forms for equality and additionally outputs their type.
@@ -104,8 +104,8 @@ We have simplified the code shown here slightly to elide meta variables and unif
 
 \begin{figure*}
 \small
-\begin{minipage}[t]{.45\textwidth}
-\begin{minipage}[t]{.40\textwidth}
+\begin{minipage}[t]{.47\textwidth}
+\begin{minipage}[t]{.44\textwidth}
 \begin{lstlisting}
 data Tm = LocalVar Ix
   | App Tm Tm Icit
@@ -146,9 +146,9 @@ unify :: Lvl -> Val -> Val -> IO ()
 unifySp :: Lvl -> Spine -> Spine -> IO ()
 \end{lstlisting}
 \end{minipage}
-\begin{minipage}[t]{.54\textwidth}
+\begin{minipage}[t]{.52\textwidth}
 \begin{leftbar}
-\begin{minipage}[t]{.49\textwidth}
+\begin{minipage}[t]{.46\textwidth}
 \begin{lstlisting}
 data Tm = LocalVar Ix
   | App Tm Tm Icit
@@ -165,7 +165,7 @@ data Tm = LocalVar Ix
 type TypeCxt = Map Lvl VTy
 \end{lstlisting}
 \end{minipage}
-\begin{minipage}[t]{.49\textwidth}
+\begin{minipage}[t]{.46\textwidth}
 \begin{lstlisting}
 data Val = VLocalVar Lvl Spine
   | VLam NameIcit Closure
@@ -191,7 +191,7 @@ unifySp :: Cxt -> VTy -> Spine -> Spine -> IO VTy
 \end{lstlisting}
 \end{leftbar}
 \end{minipage}
-\caption{syntax-direct smalltt, key definitions (left); type-directed smalltt, key definitions (right)}
+\caption{syntax-directed smalltt, key definitions (left); type-directed smalltt, key definitions (right)}
 \label{fig:smalltt}
 \end{figure*}
 

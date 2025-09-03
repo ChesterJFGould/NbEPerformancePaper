@@ -3,8 +3,8 @@ Dependently typed languages treat types as first class values, enabling computat
 Consider the following.
 {\small
 \begin{verbatim}
-int_or_string : (b : Bool) -> (if b then Int else String)
-int_or_string = \b -> if b then 3141 else "Hello, World!"
+int_or_str : (b : Bool) -> (if b then Int else String)
+int_or_str = \b -> if b then 3141 else "Hello, World!"
 \end{verbatim}
 }
 When applied to \texttt{true}, it will return the \texttt{Int} 3141.
@@ -12,14 +12,14 @@ When applied to \texttt{false}, it will return the \texttt{String "Hello, World!
 We can even express such facts as types.
 {\small
 \begin{verbatim}
-int_or_string_theorem : int_or_string(true) = 3141
-int_or_string_theorem = reflexivity
+int_or_str_theorem : int_or_str(true) = 3141
+int_or_str_theorem = reflexivity
 \end{verbatim}
 }
 
 Type-checking these requires deciding equality between two expressions.
 The typing judgement $\Gamma \vdash e : A$ (expression $e$ has type $A$ with free variables $\Gamma$), must reason about equality of expressions.
-In the true branch of \verb|int_or_string| we make the judgement $\vdash 3141 : ({\small\verb|if true then Int else String|})$, and must reason this type is equal to {\small\verb|Int|}.
+In the true branch of \verb|int_or_str| we make the judgement $\vdash 3141 : \\({\small\verb|if true then Int else String|})$, and must reason that this type is equal to {\small\verb|Int|}.
 
 Equality is captured by judgements of the form $\Gamma \vdash e_1 = e_2 : A$ ($e_1$ is equal to $e_2$ at type $A$ with free variables $\Gamma$).
 The two judgements interact through the following typing rule.
@@ -28,7 +28,7 @@ The two judgements interact through the following typing rule.
 \end{mathpar}
 An expression $e$ of type $B$ can also be considered of type $A$ so long as $A$ and $B$ are equal.
 
-How to implement decisions procedures for judgements of this form is an oft debated topic.
+How to implement decision procedures for judgements of this form is an oft debated topic.
 
 Our example relies on the following two rules.
 \begin{mathpar}
@@ -51,7 +51,7 @@ These rules are syntax-directed; we can see the type $A$ is not relevant in eith
 Another group of rules, called $\eta$ rules, give us additional equalities that rely on the type, rather than capturing the execution of a program.
 \begin{mathpar}
   \inferrule*[left=Fun-$\eta$]
-  { \Gamma, x : A \vdash f x = g x : B
+  { \Gamma, x : A \vdash f \hspace{0.2em} x = g \hspace{0.2em} x : B
   }
   { \Gamma \vdash f = g : (x : A) \to B
   }
@@ -62,7 +62,8 @@ Another group of rules, called $\eta$ rules, give us additional equalities that 
   { \Gamma \vdash a = b : \text{Unit}
   }
 \end{mathpar}
-The Fun-$\eta$ rule gives a function extensionality principle for terms of a function type.
+%  The Fun-$\eta$ rule gives a function extensionality principle for terms of a function type.
+The Fun-$\eta$ rule looks similar to the function extensionality principle and says that two functions are definitionally equal if they are definitionally equal when applied to an abstract variable.
 The Unit-$\eta$ rule implies the Unit type has the single element $\unitE$.
 Since there is only one element of the Unit type, all expressions of Unit type are equal.
 This rule lets us type-check the following program.
@@ -80,7 +81,7 @@ NbE uses this process to turn the problem of deciding judgemental equality into 
 
 Simple NbE algorithms implement an environment passing interpreter such as \citet{Coquand1996} or \citet{Chapman2005}.
 %Other algorithms are either much larger in scale, such as the compiler into bytecode described in \citet{Grgoire2002}, or require the knowledge of very dense mathematics to understand such as \citet{Ahman2013}.
-These interpreters can have performance competitive with the widely used dependently typed languages, as \citet{smalltt} demonstrates with smalltt.
+These interpreters can have performance competitive with the widely used dependently typed languages, as \citet{smalltt} demonstrates with smalltt, a small but realistic, and very performant, type-checker for a dependent type theory.
 
 %However, previous work on NbE interpreters follow an ad-hoc recipe for designing their algorithms.
 %When adding new language constructs, it is unclear how to add accompanying equality rules.
